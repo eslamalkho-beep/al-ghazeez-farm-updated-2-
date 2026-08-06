@@ -97,6 +97,27 @@
               <input type="number" id="purchasePrice" class="form-control" min="0" />
             </div>
 
+            <div class="form-group">
+              <label for="locationId">الحظيرة/الموقع</label>
+              <select id="locationId" class="form-control">
+                <option value="">-- غير محدد --</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="motherId">الأم</label>
+              <select id="motherId" class="form-control">
+                <option value="">-- غير معروفة --</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="fatherId">الأب</label>
+              <select id="fatherId" class="form-control">
+                <option value="">-- غير معروف --</option>
+              </select>
+            </div>
+
             <div class="form-group form-group--full">
               <label for="notes">ملاحظات</label>
               <textarea id="notes" class="form-control" rows="3"></textarea>
@@ -106,6 +127,9 @@
               <button type="submit" class="btn btn--success" id="save-btn">حفظ</button>
               <a href="herd-list.html" class="btn btn--outline">إلغاء</a>
               <a href="#" id="health-history-link" class="btn btn--outline" style="display:none;">السجل الصحي</a>
+              <a href="#" id="weight-history-link" class="btn btn--outline" style="display:none;">سجل الوزن</a>
+              <a href="#" id="vaccination-history-link" class="btn btn--outline" style="display:none;">التحصينات</a>
+              <button type="button" class="btn btn--outline" id="print-card-btn" style="display:none;">🖨️ بطاقة الحيوان (QR)</button>
               <a href="#" id="register-death-link" class="btn btn--danger" style="display:none;">تسجيل نفوق</a>
               <button type="button" class="btn btn--danger" id="delete-btn" style="display:none; margin-right:auto;">حذف الحيوان</button>
             </div>
@@ -117,10 +141,12 @@
 
   <div id="modal-root"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script src="../js/db/db.js"></script>
   <script src="../js/services/auth-service.js"></script>
   <script src="../js/services/notification-service.js"></script>
   <script src="../js/services/animal-service.js"></script>
+  <script src="../js/services/location-service.js"></script>
   <script src="../js/utils/validators.js"></script>
   <script src="../js/utils/formatters.js"></script>
   <script src="../js/components/sidebar.js"></script>
@@ -128,6 +154,7 @@
   <script src="../js/components/header.js"></script>
   <script src="../js/components/modal.js"></script>
   <script src="../js/components/toast.js"></script>
+  <script src="../js/components/animal-card-print.js"></script>
   <script src="../js/pages/herd-form-page.js"></script>
 </body>
 </html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>سجل الوزن | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2 id="page-title">سجل الوزن</h2>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn btn--outline" id="export-excel-btn">تصدير Excel</button>
+            <button type="button" class="btn btn--outline" id="export-pdf-btn">تصدير PDF</button>
+            <a href="herd-list.html" class="btn btn--outline">→ سجل القطيع</a>
+          </div>
+        </div>
+
+        <div class="card" id="weight-form-card" style="margin-bottom: var(--spacing-4);">
+          <div class="card__header"><h3>تسجيل وزن جديد</h3></div>
+
+          <form id="weight-form" class="form-grid" novalidate>
+            <div class="form-group">
+              <label for="animalId">الحيوان <span class="required">*</span></label>
+              <select id="animalId" class="form-control"></select>
+              <span class="form-error">يرجى اختيار الحيوان</span>
+            </div>
+
+            <div class="form-group">
+              <label for="date">التاريخ <span class="required">*</span></label>
+              <input type="date" id="date" class="form-control" />
+              <span class="form-error">التاريخ مطلوب</span>
+            </div>
+
+            <div class="form-group">
+              <label for="weight">الوزن (كجم) <span class="required">*</span></label>
+              <input type="number" id="weight" class="form-control" min="0" step="0.1" />
+              <span class="form-error">أدخل وزنًا صحيحًا</span>
+            </div>
+
+            <div class="form-group form-group--full">
+              <label for="notes">ملاحظات</label>
+              <input type="text" id="notes" class="form-control" />
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn--success" id="save-weight-btn">حفظ الوزن</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card__header" style="padding: 0 4px; display:flex; justify-content:space-between; align-items:center;">
+          <h3 id="table-title">سجل الوزن الكامل</h3>
+          <a href="weights.html" id="clear-animal-filter-link" style="display:none; font-size:13px;">عرض كل الحيوانات</a>
+        </div>
+        <div id="weight-table"></div>
+      </main>
+    </div>
+  </div>
+
+  <div id="modal-root"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="../js/db/db.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/notification-service.js"></script>
+  <script src="../js/services/animal-service.js"></script>
+  <script src="../js/services/weight-service.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/quick-action-fab.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/components/data-table.js"></script>
+  <script src="../js/components/export-utils.js"></script>
+  <script src="../js/pages/weights-page.js"></script>
+</body>
+</html>

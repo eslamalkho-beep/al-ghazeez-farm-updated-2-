@@ -3,13 +3,14 @@
 let _allAnimalsCache = [];
 let _deathDateByAnimalId = {};
 let _saleDateByAnimalId = {};
+let _locationNameById = {};
 
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth('herd');
   renderSidebar('herd');
   renderHeader('سجل القطيع');
 
-  const [animals, deaths, revenues] = await Promise.all([getAllAnimals(), getAllDeaths(), getAllRevenues()]);
+  const [animals, deaths, revenues, locations] = await Promise.all([getAllAnimals(), getAllDeaths(), getAllRevenues(), getAllLocations()]);
   _allAnimalsCache = animals;
 
   _deathDateByAnimalId = {};
@@ -19,6 +20,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   revenues
     .filter(r => r.category === 'بيع حيوان' && r.animalId)
     .forEach(r => { _saleDateByAnimalId[r.animalId] = r.date; });
+
+  _locationNameById = {};
+  locations.forEach(l => { _locationNameById[l.id] = l.name; });
 
   const breeds = [...new Set(_allAnimalsCache.map(a => a.breed).filter(Boolean))].sort();
   document.getElementById('filter-breed').innerHTML += breeds.map(b => `<option value="${b}">${b}</option>`).join('');
@@ -52,6 +56,7 @@ const _herdExportColumns = [
   { key: 'weightLabel', label: 'الوزن' },
   { key: 'birthDateLabel', label: 'تاريخ الميلاد/الاقتناء' },
   { key: 'ageLabel', label: 'العمر الحالي' },
+  { key: 'locationLabel', label: 'الحظيرة/الموقع' },
   { key: 'statusBadge', label: 'الحالة' },
 ];
 let _herdExportRows = [];
@@ -81,6 +86,7 @@ function drawHerdTable() {
       weightLabel: `${formatNumber(a.weight || 0)} كجم`,
       birthDateLabel: formatDateArabic(a.birthDate),
       ageLabel: calculateAgeLabel(a.birthDate, ageEndDate),
+      locationLabel: _locationNameById[a.locationId] || '-',
     };
   });
 
@@ -94,6 +100,7 @@ function drawHerdTable() {
     { key: 'weightLabel', label: 'الوزن', sortable: false },
     { key: 'birthDateLabel', label: 'تاريخ الميلاد/الاقتناء', sortable: true },
     { key: 'ageLabel', label: 'العمر الحالي', sortable: false },
+    { key: 'locationLabel', label: 'الحظيرة/الموقع', sortable: true },
     { key: 'statusBadge', label: 'الحالة', sortable: false },
   ], rows, {
     onRowClick: (row) => { window.location.href = `herd-form.html?id=${row.id}`; },

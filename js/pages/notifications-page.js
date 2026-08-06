@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
-const NOTIF_TYPE_ICONS = { health: '💊', custody: '📦', finance: 'ℹ️', death: '⚠️', summary: '📈', inventory: '📉' };
+const NOTIF_TYPE_ICONS = { health: '💊', custody: '📦', finance: 'ℹ️', death: '⚠️', summary: '📈', inventory: '📉', vaccination: '💉' };
 
 async function _drawNotifications() {
   const list = await getAllNotifications();

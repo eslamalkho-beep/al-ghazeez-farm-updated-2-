@@ -2,6 +2,7 @@
 
 let _editingAnimalId = null;
 let _originalHealthStatus = null;
+let _currentAnimal = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth('herd');
@@ -10,6 +11,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const params = new URLSearchParams(window.location.search);
   const idParam = params.get('id');
+
+  const [locations, allAnimals] = await Promise.all([getAllLocations(), getAllAnimals()]);
+
+  const locationSelect = document.getElementById('locationId');
+  locationSelect.innerHTML = `<option value="">-- غير محدد --</option>` +
+    locations.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+
+  // الأم/الأب: أي حيوان حي بالجنس المناسب باستثناء الحيوان نفسه (لا يمكن أن يكون والد نفسه)
+  const excludeId = idParam ? Number(idParam) : null;
+  const potentialMothers = allAnimals.filter(a => a.gender === 'female' && a.id !== excludeId);
+  const potentialFathers = allAnimals.filter(a => a.gender === 'male' && a.id !== excludeId);
+
+  document.getElementById('motherId').innerHTML = `<option value="">-- غير معروفة --</option>` +
+    potentialMothers.map(a => `<option value="${a.id}">${a.code} (${a.breed})</option>`).join('');
+  document.getElementById('fatherId').innerHTML = `<option value="">-- غير معروف --</option>` +
+    potentialFathers.map(a => `<option value="${a.id}">${a.code} (${a.breed})</option>`).join('');
 
   if (idParam) {
     _editingAnimalId = Number(idParam);
@@ -22,6 +39,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('animal-form').addEventListener('submit', _handleSubmit);
   document.getElementById('delete-btn').addEventListener('click', _handleDelete);
+  document.getElementById('print-card-btn').addEventListener('click', () => {
+    if (_currentAnimal) printAnimalCardWithQr(_currentAnimal);
+  });
 });
 
 async function _loadAnimalIntoForm(id) {
@@ -31,6 +51,8 @@ async function _loadAnimalIntoForm(id) {
     window.location.href = 'herd-list.html';
     return;
   }
+  _currentAnimal = animal;
+
   document.getElementById('code').value = animal.code || '';
   document.getElementById('type').value = animal.type || 'sheep';
   document.getElementById('breed').value = animal.breed || '';
@@ -41,6 +63,9 @@ async function _loadAnimalIntoForm(id) {
   document.getElementById('healthStatus').value = animal.healthStatus || 'healthy';
   document.getElementById('source').value = animal.source || 'born';
   document.getElementById('purchasePrice').value = animal.purchasePrice ?? '';
+  document.getElementById('locationId').value = animal.locationId || '';
+  document.getElementById('motherId').value = animal.motherId || '';
+  document.getElementById('fatherId').value = animal.fatherId || '';
   document.getElementById('notes').value = animal.notes || '';
 
   if (animal.status === 'dead' || animal.status === 'sold') {
@@ -53,6 +78,16 @@ async function _loadAnimalIntoForm(id) {
   const healthLink = document.getElementById('health-history-link');
   healthLink.href = `health.html?animalId=${animal.id}`;
   healthLink.style.display = 'inline-flex';
+
+  const weightLink = document.getElementById('weight-history-link');
+  weightLink.href = `weights.html?animalId=${animal.id}`;
+  weightLink.style.display = 'inline-flex';
+
+  const vaccinationLink = document.getElementById('vaccination-history-link');
+  vaccinationLink.href = `vaccinations.html?animalId=${animal.id}`;
+  vaccinationLink.style.display = 'inline-flex';
+
+  document.getElementById('print-card-btn').style.display = 'inline-flex';
 
   if (animal.status === 'alive') {
     const deathLink = document.getElementById('register-death-link');
@@ -87,6 +122,9 @@ async function _handleSubmit(e) {
     healthStatus: document.getElementById('healthStatus').value,
     source: document.getElementById('source').value,
     purchasePrice: document.getElementById('purchasePrice').value ? Number(document.getElementById('purchasePrice').value) : null,
+    locationId: document.getElementById('locationId').value ? Number(document.getElementById('locationId').value) : null,
+    motherId: document.getElementById('motherId').value ? Number(document.getElementById('motherId').value) : null,
+    fatherId: document.getElementById('fatherId').value ? Number(document.getElementById('fatherId').value) : null,
     notes: document.getElementById('notes').value.trim(),
   };
 

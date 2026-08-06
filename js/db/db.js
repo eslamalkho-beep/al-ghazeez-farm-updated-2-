@@ -2,13 +2,14 @@
 // طبقة تجريدية وحيدة للتعامل مع IndexedDB — كل الخدمات تستخدم هذه الدوال فقط
 
 const DB_NAME = 'AlGhazeezFarmDB';
-const DB_VERSION = 10;
+const DB_VERSION = 11;
 
 const OBJECT_STORES = [
   'Users', 'Animals', 'BirthRecords', 'DeathRecords', 'HealthRecords',
   'Expenses', 'Revenues', 'Purchases', 'Employees', 'CustodyItems', 'Notifications', 'Categories', 'Attachments',
   'BulkPurchases', 'BulkSales', 'BulkExpenses', 'BulkBatches', 'Parties',
   'InventoryItems', 'InventoryMovements', 'ChartOfAccounts', 'JournalEntries', 'StockCounts',
+  'Locations', 'WeightRecords', 'Vaccinations',
 ];
 
 let _dbInstance = null;

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تحويل قطيع ↔ تجارة | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+  <style>
+    @media (max-width: 900px) {
+      .transfer-grid { grid-template-columns: 1fr !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2>تحويل قطيع ↔ تجارة</h2>
+        </div>
+
+        <div class="report-tabs">
+          <a href="bulk-batches.html" class="report-tab">الدفعات</a>
+          <a href="bulk-summary.html" class="report-tab">ملخص الأرصدة</a>
+          <span class="report-tab active">تحويل قطيع ↔ تجارة</span>
+        </div>
+
+        <p style="font-size:13px; color:var(--color-text-secondary); margin-bottom: var(--spacing-4);">
+          تحويل داخلي بحت بلا أثر مالي جديد (لا يُنشئ مصروف شراء ولا إيراد بيع) — الحيوان يخرج من التتبع الفردي
+          ليصبح عددًا ضمن دفعة جملة، أو العكس. القيمة التقديرية أدناه للتوثيق فقط.
+        </p>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-4);" class="transfer-grid">
+          <div class="card">
+            <div class="card__header"><h3>من القطيع إلى مخزون التجارة</h3></div>
+            <form id="to-trade-form" class="form-grid" novalidate>
+              <div class="form-group form-group--full">
+                <label for="tt-animalId">الحيوان (من القطيع الحي) <span class="required">*</span></label>
+                <select id="tt-animalId" class="form-control"></select>
+                <span class="form-error">يرجى اختيار حيوان</span>
+              </div>
+              <div class="form-group form-group--full">
+                <label for="tt-batchId">الدفعة المستهدفة <span class="required">*</span></label>
+                <select id="tt-batchId" class="form-control"></select>
+                <span class="form-error">يرجى اختيار دفعة</span>
+              </div>
+              <div class="form-group">
+                <label for="tt-date">التاريخ <span class="required">*</span></label>
+                <input type="date" id="tt-date" class="form-control" />
+                <span class="form-error">التاريخ مطلوب</span>
+              </div>
+              <div class="form-group">
+                <label for="tt-valuation">القيمة التقديرية (اختياري، للتوثيق فقط)</label>
+                <input type="number" id="tt-valuation" class="form-control" min="0" step="0.01" />
+              </div>
+              <div class="form-group form-group--full">
+                <label for="tt-notes">ملاحظات</label>
+                <input type="text" id="tt-notes" class="form-control" />
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn--success" id="to-trade-btn">تنفيذ التحويل</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="card__header"><h3>من مخزون التجارة إلى القطيع</h3></div>
+            <form id="to-herd-form" class="form-grid" novalidate>
+              <div class="form-group form-group--full">
+                <label for="th-batchId">الدفعة المصدر <span class="required">*</span></label>
+                <select id="th-batchId" class="form-control"></select>
+                <span class="form-error">يرجى اختيار دفعة</span>
+              </div>
+              <div class="form-group">
+                <label for="th-type">النوع <span class="required">*</span></label>
+                <select id="th-type" class="form-control">
+                  <option value="sheep">غنم</option>
+                  <option value="goat">ماعز</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="th-gender">الجنس <span class="required">*</span></label>
+                <select id="th-gender" class="form-control">
+                  <option value="female">أنثى</option>
+                  <option value="male">ذكر</option>
+                </select>
+              </div>
+              <div class="form-group form-group--full">
+                <label for="th-breed">السلالة <span class="required">*</span></label>
+                <input type="text" id="th-breed" class="form-control" />
+                <span class="form-error">السلالة مطلوبة</span>
+              </div>
+              <div class="form-group">
+                <label for="th-date">التاريخ <span class="required">*</span></label>
+                <input type="date" id="th-date" class="form-control" />
+                <span class="form-error">التاريخ مطلوب</span>
+              </div>
+              <div class="form-group">
+                <label for="th-valuation">القيمة التقديرية (تُحفظ كسعر شراء الحيوان الجديد)</label>
+                <input type="number" id="th-valuation" class="form-control" min="0" step="0.01" />
+              </div>
+              <div class="form-group form-group--full">
+                <label for="th-notes">ملاحظات</label>
+                <input type="text" id="th-notes" class="form-control" />
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn--success" id="to-herd-btn">تنفيذ التحويل</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="card__header" style="padding: 0 4px; margin-top: var(--spacing-4);"><h3>سجل التحويلات</h3></div>
+        <div id="transfer-log-table"></div>
+      </main>
+    </div>
+  </div>
+
+  <div id="modal-root"></div>
+
+  <script src="../js/db/db.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/notification-service.js"></script>
+  <script src="../js/services/animal-service.js"></script>
+  <script src="../js/services/bulk-batch-service.js"></script>
+  <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/services/transfer-service.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/quick-action-fab.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/components/data-table.js"></script>
+  <script src="../js/pages/transfer-page.js"></script>
+</body>
+</html>

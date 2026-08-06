@@ -40,4 +40,4 @@ const ANIMAL_GENDER_LABELS = { male: 'ذكر', female: 'أنثى' };
 const ANIMAL_HEALTH_LABELS = {
   healthy: 'سليم', sick: 'مريض', underTreatment: 'تحت العلاج', quarantine: 'حجر صحي',
 };
-const ANIMAL_STATUS_LABELS = { alive: 'حي', dead: 'نافق', sold: 'مباع' };
+const ANIMAL_STATUS_LABELS = { alive: 'حي', dead: 'نافق', sold: 'مباع', movedToTrade: 'تحويل لمخزون التجارة' };

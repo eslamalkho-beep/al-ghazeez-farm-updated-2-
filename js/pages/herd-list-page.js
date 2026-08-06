@@ -3,6 +3,7 @@
 let _allAnimalsCache = [];
 let _deathDateByAnimalId = {};
 let _saleDateByAnimalId = {};
+let _tradeTransferDateByAnimalId = {};
 let _locationNameById = {};
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -10,7 +11,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderSidebar('herd');
   renderHeader('سجل القطيع');
 
-  const [animals, deaths, revenues, locations] = await Promise.all([getAllAnimals(), getAllDeaths(), getAllRevenues(), getAllLocations()]);
+  const [animals, deaths, revenues, locations, transfers] = await Promise.all([
+    getAllAnimals(), getAllDeaths(), getAllRevenues(), getAllLocations(), getAllTransfers(),
+  ]);
   _allAnimalsCache = animals;
 
   _deathDateByAnimalId = {};
@@ -20,6 +23,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   revenues
     .filter(r => r.category === 'بيع حيوان' && r.animalId)
     .forEach(r => { _saleDateByAnimalId[r.animalId] = r.date; });
+
+  _tradeTransferDateByAnimalId = {};
+  transfers
+    .filter(t => t.kind === 'herdToTrade' && t.animalId)
+    .forEach(t => { _tradeTransferDateByAnimalId[t.animalId] = t.date; });
 
   _locationNameById = {};
   locations.forEach(l => { _locationNameById[l.id] = l.name; });
@@ -77,6 +85,7 @@ function drawHerdTable() {
   rows = rows.map(a => {
     const ageEndDate = a.status === 'dead' ? _deathDateByAnimalId[a.id]
       : a.status === 'sold' ? _saleDateByAnimalId[a.id]
+      : a.status === 'movedToTrade' ? _tradeTransferDateByAnimalId[a.id]
       : null;
     return {
       ...a,
@@ -108,16 +117,16 @@ function drawHerdTable() {
   });
 }
 
-// حيوان نافق/مباع يُعرض بحالة دورة حياته فقط، وليس بحالته الصحية الأخيرة قبل ذلك
+// حيوان نافق/مباع/مُحوَّل للتجارة يُعرض بحالة دورة حياته فقط، وليس بحالته الصحية الأخيرة قبل ذلك
 function _displayStatus(a) {
-  if (a.status === 'dead' || a.status === 'sold') return a.status;
+  if (a.status === 'dead' || a.status === 'sold' || a.status === 'movedToTrade') return a.status;
   return a.healthStatus;
 }
 
 function _statusBadge(status) {
   const map = {
     healthy: 'badge--green', sick: 'badge--red', underTreatment: 'badge--warning', quarantine: 'badge--gray',
-    dead: 'badge--red', sold: 'badge--blue',
+    dead: 'badge--red', sold: 'badge--blue', movedToTrade: 'badge--gray',
   };
   const label = ANIMAL_HEALTH_LABELS[status] || ANIMAL_STATUS_LABELS[status] || status;
   return `<span class="badge ${map[status] || 'badge--gray'}">${label}</span>`;

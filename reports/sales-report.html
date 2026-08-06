@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>تقارير السجل الصحي | مزرعة الغزيز</title>
+  <title>تقرير المبيعات وتكلفة الرأس | مزرعة الغزيز</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/variables.css" />
   <link rel="stylesheet" href="../css/reset.css" />
@@ -11,10 +11,9 @@
   <link rel="stylesheet" href="../css/components.css" />
   <link rel="stylesheet" href="../css/responsive.css" />
   <style>
-    @media print {
-      .sidebar, .app-header, .report-tabs, .report-filters, #print-btn { display:none !important; }
-      .main-area { margin: 0 !important; }
-    }
+    .overview-section-title { font-size:15px; font-weight:800; color: var(--color-text-primary); margin: var(--spacing-4) 0 var(--spacing-2); }
+    .overview-section-title:first-of-type { margin-top: 0; }
+    @media print { .sidebar, .app-header, .report-tabs, .report-filters, #print-btn { display:none !important; } .main-area { margin: 0 !important; } }
   </style>
 </head>
 <body>
@@ -24,7 +23,7 @@
       <div id="header-container"></div>
       <main class="page-content">
         <div class="page-header">
-          <h2>تقارير السجل الصحي</h2>
+          <h2>تقرير المبيعات وتكلفة الرأس</h2>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button type="button" class="btn btn--outline" id="export-excel-btn">تصدير Excel</button>
             <button type="button" class="btn btn--outline" id="export-pdf-btn">تصدير PDF</button>
@@ -34,9 +33,9 @@
 
         <div class="report-tabs">
           <a href="herd-reports.html" class="report-tab">تقارير القطيع</a>
-          <span class="report-tab active">تقارير السجل الصحي</span>
+          <a href="health-reports.html" class="report-tab">تقارير السجل الصحي</a>
           <a href="revenue-reports.html" class="report-tab">تقارير الإيرادات</a>
-          <a href="sales-report.html" class="report-tab">المبيعات وتكلفة الرأس</a>
+          <span class="report-tab active">المبيعات وتكلفة الرأس</span>
           <a href="expense-reports.html" class="report-tab">تقارير المصروفات</a>
           <a href="purchase-reports.html" class="report-tab">تقارير المشتريات</a>
           <a href="party-reports.html" class="report-tab">العملاء والموردون</a>
@@ -45,19 +44,12 @@
           <a href="overview-report.html" class="report-tab">التقرير الشامل</a>
         </div>
 
-        <div class="report-tabs">
-          <button class="report-tab active" data-tab="stats">إحصائيات عامة</button>
-          <button class="report-tab" data-tab="records" id="tab-btn-records">السجلات خلال فترة</button>
-          <button class="report-tab" data-tab="byAnimal">حسب الحيوان</button>
-          <button class="report-tab" data-tab="byVet">حسب الطبيب البيطري</button>
-        </div>
-
         <div class="report-filters">
           <label style="font-size:13px; color:var(--color-text-secondary);">من</label>
           <input type="date" id="report-from" class="form-control" style="max-width:170px;" />
           <label style="font-size:13px; color:var(--color-text-secondary);">إلى</label>
           <input type="date" id="report-to" class="form-control" style="max-width:170px;" />
-          <span style="font-size:12px; color:var(--color-text-secondary);">(الفترة تُطبَّق على السجلات والتكلفة فقط — أعداد الحيوانات المريضة/المشفاة/تحت العلاج دائمًا لحظية)</span>
+          <span style="font-size:12px; color:var(--color-text-secondary);">(الفترة تُطبَّق على قسم المبيعات فقط — تكلفة الرأس رصيد تراكمي دائمًا لكل حيوان)</span>
         </div>
 
         <div id="report-content"></div>
@@ -66,12 +58,13 @@
   </div>
   <div id="modal-root"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="../js/db/db.js"></script>
   <script src="../js/services/auth-service.js"></script>
   <script src="../js/services/notification-service.js"></script>
   <script src="../js/services/animal-service.js"></script>
+  <script src="../js/services/revenue-service.js"></script>
+  <script src="../js/services/bulk-batch-service.js"></script>
   <script src="../js/services/health-service.js"></script>
   <script src="../js/utils/formatters.js"></script>
   <script src="../js/components/sidebar.js"></script>
@@ -80,9 +73,8 @@
   <script src="../js/components/modal.js"></script>
   <script src="../js/components/toast.js"></script>
   <script src="../js/components/data-table.js"></script>
-  <script src="../js/components/chart-renderer.js"></script>
   <script src="../js/components/export-utils.js"></script>
   <script src="../js/components/kpi-bar.js"></script>
-  <script src="../js/pages/health-reports-page.js"></script>
+  <script src="../js/pages/sales-report-page.js"></script>
 </body>
 </html>

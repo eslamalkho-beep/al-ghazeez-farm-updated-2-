@@ -150,6 +150,43 @@ function computeIncomeStatement(allAccounts, allEntries, from = null, to = null)
   return { revenueRows, expenseRows, totalRevenue, totalExpense, netIncome };
 }
 
+// ===== تحويل الصندوق ↔ البنك =====
+// وصلة رفيعة فوق createJournalEntry: تحويل نقدي بين حسابي "الصندوق" (1000) و"البنك" (1010) الثابتين —
+// قيد يومية عادي بسطرين، لا يحتاج مخزنًا جديدًا (يظهر تلقائيًا في سجل القيود وميزان المراجعة). يُوسَم وصفه
+// بسابقة ثابتة "تحويل صندوق↔بنك:" حتى يمكن فلترته لعرض سجل التحويلات بمعزل عن باقي القيود
+const CASH_BANK_TRANSFER_PREFIX = 'تحويل صندوق↔بنك:';
+const CASH_ACCOUNT_CODE = '1000';
+const BANK_ACCOUNT_CODE = '1010';
+
+async function createCashBankTransfer({ date, direction, amount, notes }) {
+  const accounts = await getAllAccounts();
+  const cashAccount = getAccountByCode(CASH_ACCOUNT_CODE, accounts);
+  const bankAccount = getAccountByCode(BANK_ACCOUNT_CODE, accounts);
+  if (!cashAccount || !bankAccount) throw new Error('حسابا الصندوق/البنك الأساسيان غير موجودين في شجرة الحسابات');
+
+  const fromAccount = direction === 'cashToBank' ? cashAccount : bankAccount;
+  const toAccount = direction === 'cashToBank' ? bankAccount : cashAccount;
+  const directionLabel = direction === 'cashToBank' ? 'من الصندوق إلى البنك' : 'من البنك إلى الصندوق';
+
+  const lines = [
+    { accountId: toAccount.id, debit: Number(amount), credit: 0 },
+    { accountId: fromAccount.id, debit: 0, credit: Number(amount) },
+  ];
+  const description = `${CASH_BANK_TRANSFER_PREFIX} ${directionLabel}${notes ? ' — ' + notes : ''}`;
+
+  const entryNumber = await generateNextEntryNumber();
+  return createJournalEntry({ entryNumber, date, description, lines });
+}
+
+// سجل التحويلات المعروض في صفحة cash-transfer.html — يُشتق من القيود الموسومة بالسابقة الثابتة أعلاه،
+// وليس مخزَّنًا في مكان منفصل
+async function getAllCashBankTransfers() {
+  const entries = await getAllJournalEntries();
+  return entries
+    .filter(e => e.description && e.description.startsWith(CASH_BANK_TRANSFER_PREFIX))
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+}
+
 // الميزانية العمومية كما في تاريخ معيّن: أصول مقابل خصوم + حقوق ملكية (مع صافي الدخل التراكمي كـ"أرباح غير مرحّلة")
 // تبسيط معروف: لا يوجد إجراء إقفال فترة رسمي في هذا النظام، فصافي الدخل يُحسب حيًا حتى asOfDate بدل أن يُرحَّل فعليًا لحساب رأس المال
 function computeBalanceSheet(allAccounts, allEntries, asOfDate) {

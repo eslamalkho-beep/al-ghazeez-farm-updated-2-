@@ -14,6 +14,8 @@ const QUICK_ACTIONS = [
   // بيع الأغنام بند بيع يُضاف لدفعة قائمة (لا يوجد "بيع" بمعزل عن دفعة)، فالوجهة قائمة الدفعات لا نموذج فارغ
   { moduleKey: 'bulk', label: 'بيع أغنام (من دفعة قائمة)', href: 'bulk/bulk-batches.html', icon: 'bulk' },
   { moduleKey: 'inventory', label: 'جرد المخازن', href: 'inventory/stock-count-form.html', icon: 'warehouse' },
+  { moduleKey: 'accounting', label: 'تحويل صندوق ↔ بنك', href: 'accounting/cash-transfer.html', icon: 'ledger' },
+  { moduleKey: 'bulk', label: 'تحويل قطيع ↔ تجارة', href: 'bulk/transfer.html', icon: 'bulk' },
 ];
 
 function renderQuickActionFab() {

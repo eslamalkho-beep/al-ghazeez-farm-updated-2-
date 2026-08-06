@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>السجل الصحي | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2 id="page-title">السجل الصحي</h2>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn btn--outline" id="export-excel-btn">تصدير Excel</button>
+            <button type="button" class="btn btn--outline" id="export-pdf-btn">تصدير PDF</button>
+            <a href="herd-list.html" class="btn btn--outline">→ سجل القطيع</a>
+          </div>
+        </div>
+
+        <div class="card" id="health-form-card" style="margin-bottom: var(--spacing-4);">
+          <div class="card__header"><h3>تسجيل زيارة / حالة صحية</h3></div>
+          <p id="health-form-blocked-note" style="display:none; color: var(--color-text-secondary); font-size:13px;">
+            هذا الحيوان بحالة نافق/مباع في سجل القطيع، ولا يمكن تسجيل سجل صحي جديد له.
+          </p>
+
+          <form id="health-form" class="form-grid" novalidate>
+            <div class="form-group">
+              <label for="animalId">الحيوان <span class="required">*</span></label>
+              <select id="animalId" class="form-control"></select>
+              <span class="form-error">يرجى اختيار الحيوان</span>
+            </div>
+
+            <div class="form-group">
+              <label for="date">التاريخ <span class="required">*</span></label>
+              <input type="date" id="date" class="form-control" />
+              <span class="form-error">التاريخ مطلوب</span>
+            </div>
+
+            <div class="form-group form-group--full">
+              <label for="diagnosis">التشخيص <span class="required">*</span></label>
+              <input type="text" id="diagnosis" class="form-control" placeholder="مثال: التهاب رئوي، تسمم غذائي..." />
+              <span class="form-error">التشخيص مطلوب</span>
+            </div>
+
+            <div class="form-group form-group--full">
+              <label for="treatment">العلاج</label>
+              <input type="text" id="treatment" class="form-control" placeholder="الدواء/الإجراء المُتّبع" />
+            </div>
+
+            <div class="form-group">
+              <label for="veterinarianName">اسم الطبيب البيطري</label>
+              <input type="text" id="veterinarianName" class="form-control" />
+            </div>
+
+            <div class="form-group">
+              <label for="cost">تكلفة العلاج (ر.س)</label>
+              <input type="number" id="cost" class="form-control" min="0" step="0.01" />
+            </div>
+
+            <div class="form-group form-group--full">
+              <label for="resultingHealthStatus">تحديث الحالة الصحية للحيوان إلى</label>
+              <select id="resultingHealthStatus" class="form-control">
+                <option value="">بدون تغيير</option>
+                <option value="healthy">سليم</option>
+                <option value="sick">مريض</option>
+                <option value="underTreatment">تحت العلاج</option>
+                <option value="quarantine">حجر صحي</option>
+              </select>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn--success" id="save-health-btn">حفظ السجل</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card__header" style="padding: 0 4px; display:flex; justify-content:space-between; align-items:center;">
+          <h3 id="table-title">السجل الصحي الكامل</h3>
+          <a href="health.html" id="clear-animal-filter-link" style="display:none; font-size:13px;">عرض كل الحيوانات</a>
+        </div>
+        <div id="health-table"></div>
+      </main>
+    </div>
+  </div>
+
+  <div id="modal-root"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="../js/db/db.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/notification-service.js"></script>
+  <script src="../js/services/animal-service.js"></script>
+  <script src="../js/services/health-service.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/components/data-table.js"></script>
+  <script src="../js/components/export-utils.js"></script>
+  <script src="../js/pages/health-page.js"></script>
+</body>
+</html>

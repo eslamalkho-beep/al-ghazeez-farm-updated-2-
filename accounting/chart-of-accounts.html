@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>شجرة الحسابات | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2>المحاسبة</h2>
+          <button class="btn btn--success" id="add-account-btn">+ حساب جديد</button>
+        </div>
+
+        <div class="report-tabs">
+          <span class="report-tab active">شجرة الحسابات</span>
+          <a href="journal-entries.html" class="report-tab">القيود اليومية</a>
+          <a href="../reports/accounting-reports.html" class="report-tab">التقارير المحاسبية</a>
+        </div>
+
+        <div class="card" style="margin-bottom: var(--spacing-3); display:flex; gap: var(--spacing-3); flex-wrap:wrap; align-items:center;">
+          <select id="filter-type" class="form-control" style="max-width:200px;">
+            <option value="">كل الأنواع</option>
+            <option value="asset">أصول</option>
+            <option value="liability">خصوم</option>
+            <option value="equity">حقوق ملكية</option>
+            <option value="revenue">إيرادات</option>
+            <option value="expense">مصروفات</option>
+          </select>
+        </div>
+        <div id="accounts-table"></div>
+      </main>
+    </div>
+  </div>
+  <div id="modal-root"></div>
+
+  <script src="../js/db/db.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/notification-service.js"></script>
+  <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/components/data-table.js"></script>
+  <script src="../js/pages/chart-of-accounts-page.js"></script>
+</body>
+</html>

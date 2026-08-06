@@ -1,0 +1,243 @@
+/* ===== الهيكل العام للصفحة ===== */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ===== الشريط الجانبي ===== */
+.sidebar {
+  width: var(--sidebar-width);
+  min-height: 100vh;
+  background: linear-gradient(180deg, var(--color-primary-blue-dark), #0F3568);
+  color: #fff;
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s ease;
+}
+
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-4) var(--spacing-3);
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+
+.sidebar__brand-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sidebar__brand-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.sidebar__brand-text {
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+.sidebar__brand-text span {
+  display: block;
+  font-weight: 400;
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+}
+
+.sidebar__nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-3) var(--spacing-2);
+}
+
+.sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: 11px var(--spacing-3);
+  border-radius: var(--radius-sm);
+  color: rgba(255,255,255,0.78);
+  font-size: 14px;
+  margin-bottom: 2px;
+  border-right: 3px solid transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar__link:hover {
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+}
+
+.sidebar__link.active {
+  background: rgba(30, 158, 90, 0.18);
+  color: #fff;
+  border-right-color: var(--color-primary-green);
+  font-weight: 700;
+}
+
+.sidebar__link svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.sidebar__toggle {
+  display: none;
+}
+
+/* ===== المنطقة الرئيسية ===== */
+.main-area {
+  margin-right: var(--sidebar-width);
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== الهيدر ===== */
+.app-header {
+  height: var(--header-height);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--spacing-4);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.app-header__title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.app-header__hamburger {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--color-text-primary);
+}
+
+.app-header__right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.app-header__bell {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.app-header__bell svg {
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-secondary);
+}
+
+.app-header__badge {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  background: var(--color-primary-red);
+  color: #fff;
+  font-size: 10px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
+
+.app-header__user {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.app-header__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-primary-blue);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.app-header__user-info {
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.app-header__user-info span {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+}
+
+.app-header__logout {
+  color: var(--color-primary-red);
+  font-size: 13px;
+  font-weight: 700;
+  margin-right: var(--spacing-2);
+}
+
+.page-content {
+  padding: var(--spacing-4);
+}
+
+.sidebar-overlay {
+  display: none;
+}
+
+@media (max-width: 992px) {
+  .sidebar {
+    transform: translateX(100%);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .main-area {
+    margin-right: 0;
+  }
+  .app-header__hamburger {
+    display: block;
+  }
+  .sidebar-overlay.show {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 35;
+  }
+  .app-header__user-info {
+    display: none;
+  }
+}

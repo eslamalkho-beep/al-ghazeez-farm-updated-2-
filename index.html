@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تسجيل الدخول | مزرعة الغزيز</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <style>
+    body {
+      position: relative;
+      overflow: hidden;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--spacing-3);
+      background: linear-gradient(135deg, var(--color-primary-blue), var(--color-primary-green-dark), var(--color-primary-blue-dark));
+      background-size: 300% 300%;
+      animation: loginGradientShift 14s ease infinite;
+    }
+    body::before,
+    body::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(70px);
+      opacity: 0.35;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::before {
+      width: 380px;
+      height: 380px;
+      background: var(--color-primary-green);
+      top: -130px;
+      inset-inline-end: -100px;
+      animation: loginBlobFloat 16s ease-in-out infinite;
+    }
+    body::after {
+      width: 300px;
+      height: 300px;
+      background: var(--color-warning);
+      bottom: -110px;
+      inset-inline-start: -90px;
+      animation: loginBlobFloat 20s ease-in-out infinite reverse;
+    }
+    @keyframes loginGradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes loginBlobFloat {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(30px, 40px) scale(1.15); }
+    }
+    @keyframes loginCardIn {
+      from { opacity: 0; transform: translateY(16px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      body, body::before, body::after { animation: none; }
+      .login-card { animation: none; }
+    }
+    .login-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 400px;
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+      padding: var(--spacing-5) var(--spacing-4);
+      animation: loginCardIn 0.5s ease-out;
+    }
+    .login-card__logo {
+      width: 72px;
+      height: 72px;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin: 0 auto var(--spacing-3);
+    }
+    .login-card__logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .login-card__title {
+      text-align: center;
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+    .login-card__subtitle {
+      text-align: center;
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--spacing-4);
+    }
+    .login-form .form-group { margin-bottom: var(--spacing-3); }
+    .login-options {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacing-4);
+      font-size: 12.5px;
+    }
+    .login-options label { display: flex; align-items: center; gap: 6px; color: var(--color-text-secondary); }
+    .login-options a { color: var(--color-primary-blue); font-weight: 700; }
+    .login-error-box {
+      display: none;
+      background: rgba(214,54,46,0.08);
+      color: var(--color-primary-red-dark);
+      border: 1px solid rgba(214,54,46,0.25);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-bottom: var(--spacing-3);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-card">
+    <div class="login-card__logo"><img src="assets/logo.png" alt="شعار مزرعة الغزيز" /></div>
+    <h1 class="login-card__title">مزرعة الغزيز</h1>
+    <p class="login-card__subtitle">نظام إدارة مزرعة الأغنام والماعز</p>
+
+    <div class="login-error-box" id="login-error-box"></div>
+
+    <form class="login-form" id="login-form" novalidate>
+      <div class="form-group" id="username-group">
+        <label for="username">اسم المستخدم <span class="required">*</span></label>
+        <input type="text" id="username" class="form-control" placeholder="أدخل اسم المستخدم" autocomplete="username" />
+        <span class="form-error">هذا الحقل مطلوب</span>
+      </div>
+
+      <div class="form-group" id="password-group">
+        <label for="password">كلمة المرور <span class="required">*</span></label>
+        <div class="password-field">
+          <input type="password" id="password" class="form-control" placeholder="أدخل كلمة المرور" autocomplete="current-password" />
+          <span class="toggle-password" id="toggle-password">إظهار</span>
+        </div>
+        <span class="form-error">هذا الحقل مطلوب</span>
+      </div>
+
+      <div class="login-options">
+        <label><input type="checkbox" id="remember-me" /> تذكرني</label>
+        <a href="#" id="forgot-password-link">نسيت كلمة المرور؟</a>
+      </div>
+
+      <button type="submit" class="btn btn--success btn--block" id="login-submit-btn">تسجيل الدخول</button>
+    </form>
+  </div>
+
+  <div id="modal-root"></div>
+
+  <script src="js/db/db.js"></script>
+  <script src="js/services/bulk-batch-service.js"></script>
+  <script src="js/services/accounting-service.js"></script>
+  <script src="js/services/category-service.js"></script>
+  <script src="js/services/expense-service.js"></script>
+  <script src="js/db/seed.js"></script>
+  <script src="js/services/auth-service.js"></script>
+  <script src="js/utils/validators.js"></script>
+  <script src="js/components/modal.js"></script>
+  <script src="js/components/toast.js"></script>
+  <script src="js/pages/login-page.js"></script>
+</body>
+</html>

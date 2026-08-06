@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>سجل المصاريف | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2>سجل المصاريف</h2>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn btn--outline" id="export-excel-btn">تصدير Excel</button>
+            <button type="button" class="btn btn--outline" id="export-pdf-btn">تصدير PDF</button>
+            <a href="expense-form.html" class="btn btn--success">+ تكويد مصروف</a>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom: var(--spacing-3); display:flex; gap: var(--spacing-3); flex-wrap:wrap; align-items:center;">
+          <input type="date" id="filter-from" class="form-control" style="max-width:170px;" />
+          <span style="color: var(--color-text-secondary); font-size:13px;">إلى</span>
+          <input type="date" id="filter-to" class="form-control" style="max-width:170px;" />
+          <select id="filter-category" class="form-control" style="max-width:170px;">
+            <option value="">كل البنود</option>
+          </select>
+          <select id="filter-status" class="form-control" style="max-width:150px;">
+            <option value="">كل الحالات</option>
+            <option value="approved">معتمد</option>
+            <option value="pending">قيد الاعتماد</option>
+          </select>
+          <button class="btn btn--outline" id="clear-filters-btn">مسح الفلاتر</button>
+          <div style="margin-right:auto; font-weight:700;">الإجمالي: <span id="total-amount" style="color: var(--color-primary-red);">0 ر.س</span></div>
+        </div>
+        <div id="expense-table"></div>
+      </main>
+    </div>
+  </div>
+  <div id="modal-root"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="../js/db/db.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/notification-service.js"></script>
+  <script src="../js/services/expense-service.js"></script>
+  <script src="../js/services/category-service.js"></script>
+  <script src="../js/services/attachment-service.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/components/data-table.js"></script>
+  <script src="../js/components/attachment-manager.js"></script>
+  <script src="../js/components/export-utils.js"></script>
+  <script src="../js/pages/expense-list-page.js"></script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تكويد حيوان | مزرعة الغزيز</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+
+    <div class="main-area">
+      <div id="header-container"></div>
+
+      <main class="page-content">
+        <div class="page-header">
+          <h2 id="form-title">تكويد حيوان جديد</h2>
+          <a href="herd-list.html" class="btn btn--outline">→ العودة للسجل</a>
+        </div>
+
+        <div class="card">
+          <form id="animal-form" class="form-grid" novalidate>
+
+            <div class="form-group">
+              <label for="code">الكود <span class="required">*</span></label>
+              <input type="text" id="code" class="form-control" />
+              <span class="form-error">الكود مطلوب وغير مستخدم من قبل</span>
+            </div>
+
+            <div class="form-group">
+              <label for="type">النوع <span class="required">*</span></label>
+              <select id="type" class="form-control">
+                <option value="sheep">غنم</option>
+                <option value="goat">ماعز</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="breed">السلالة <span class="required">*</span></label>
+              <input type="text" id="breed" class="form-control" placeholder="مثال: نجدي، حري، عارضي" />
+              <span class="form-error">هذا الحقل مطلوب</span>
+            </div>
+
+            <div class="form-group">
+              <label for="gender">الجنس <span class="required">*</span></label>
+              <select id="gender" class="form-control">
+                <option value="female">أنثى</option>
+                <option value="male">ذكر</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="birthDate">تاريخ الميلاد / الاقتناء</label>
+              <input type="date" id="birthDate" class="form-control" />
+            </div>
+
+            <div class="form-group">
+              <label for="color">اللون</label>
+              <input type="text" id="color" class="form-control" />
+            </div>
+
+            <div class="form-group">
+              <label for="weight">الوزن الحالي (كجم)</label>
+              <input type="number" id="weight" class="form-control" min="0" step="0.1" />
+              <span class="form-error">أدخل قيمة صحيحة</span>
+            </div>
+
+            <div class="form-group">
+              <label for="healthStatus">الحالة الصحية</label>
+              <select id="healthStatus" class="form-control">
+                <option value="healthy">سليم</option>
+                <option value="sick">مريض</option>
+                <option value="underTreatment">تحت العلاج</option>
+                <option value="quarantine">حجر صحي</option>
+              </select>
+              <span id="healthStatus-locked-hint" style="display:none; font-size:12px; color: var(--color-text-secondary);">لا يمكن تعديل الحالة الصحية لحيوان نافق أو مباع</span>
+            </div>
+
+            <div class="form-group">
+              <label for="source">مصدر الحيوان</label>
+              <select id="source" class="form-control">
+                <option value="born">مولود بالمزرعة</option>
+                <option value="purchased">مُشترى</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="purchasePrice">سعر الشراء (إن وُجد)</label>
+              <input type="number" id="purchasePrice" class="form-control" min="0" />
+            </div>
+
+            <div class="form-group form-group--full">
+              <label for="notes">ملاحظات</label>
+              <textarea id="notes" class="form-control" rows="3"></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn--success" id="save-btn">حفظ</button>
+              <a href="herd-list.html" class="btn btn--outline">إلغاء</a>
+              <a href="#" id="health-history-link" class="btn btn--outline" style="display:none;">السجل الصحي</a>
+              <a href="#" id="register-death-link" class="btn btn--danger" style="display:none;">تسجيل نفوق</a>
+              <button type="button" class="btn btn--danger" id="delete-btn" style="display:none; margin-right:auto;">حذف الحيوان</button>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="modal-root"></div>
+
+  <script src="../js/db/db.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/notification-service.js"></script>
+  <script src="../js/services/animal-service.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/pages/herd-form-page.js"></script>
+</body>
+</html>

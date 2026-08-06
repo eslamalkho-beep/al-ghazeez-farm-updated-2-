@@ -1,0 +1,15 @@
+@media (max-width: 1200px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 992px) {
+  .dashboard-charts { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .kpi-grid { grid-template-columns: 1fr; }
+  .page-content { padding: var(--spacing-3); }
+  .form-grid { grid-template-columns: 1fr; }
+  .data-table-toolbar { flex-direction: column; align-items: stretch; }
+  .chart-box { height: 240px; }
+}

@@ -1,0 +1,23 @@
+# إعدادات Claude Code المحلية (تحتوي مسارات خاصة بالجهاز)
+.claude/settings.local.json
+
+# ملفات نظام التشغيل
+Thumbs.db
+ehthumbs.db
+desktop.ini
+.DS_Store
+
+# إعدادات المحررات
+.vscode/
+.idea/
+*.swp
+
+# النسخ الاحتياطية المصدَّرة من صفحة الإعدادات (بيانات فعلية — لا تُرفع للمستودع)
+backup*.json
+*-backup.json
+النسخة-الاحتياطية*.json
+
+# مخرجات أدوات النشر
+.vercel
+node_modules/
+*.log

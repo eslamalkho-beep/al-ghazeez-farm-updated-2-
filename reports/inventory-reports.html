@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تقارير المخزون | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+  <style>
+    @media print { .sidebar, .app-header, .report-filters, #print-btn { display:none !important; } .main-area { margin:0 !important; } }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2>تقارير المخزون</h2>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn btn--outline" id="export-excel-btn">تصدير Excel</button>
+            <button type="button" class="btn btn--outline" id="export-pdf-btn">تصدير PDF</button>
+            <button class="btn btn--outline" id="print-btn" onclick="window.print()">طباعة</button>
+          </div>
+        </div>
+        <div class="report-tabs">
+          <a href="herd-reports.html" class="report-tab">تقارير القطيع</a>
+          <a href="health-reports.html" class="report-tab">تقارير السجل الصحي</a>
+          <a href="revenue-reports.html" class="report-tab">تقارير الإيرادات</a>
+          <a href="expense-reports.html" class="report-tab">تقارير المصروفات</a>
+          <a href="purchase-reports.html" class="report-tab">تقارير المشتريات</a>
+          <a href="party-reports.html" class="report-tab">العملاء والموردون</a>
+          <span class="report-tab active">المخزون</span>
+          <a href="accounting-reports.html" class="report-tab">المحاسبة</a>
+          <a href="overview-report.html" class="report-tab">التقرير الشامل</a>
+        </div>
+
+        <div class="report-filters">
+          <label style="font-size:13px; color:var(--color-text-secondary);">من (حركات الفترة)</label>
+          <input type="date" id="report-from" class="form-control" style="max-width:170px;" />
+          <label style="font-size:13px; color:var(--color-text-secondary);">إلى</label>
+          <input type="date" id="report-to" class="form-control" style="max-width:170px;" />
+          <span style="font-size:12px; color:var(--color-text-secondary);">("الرصيد" يُحسب كما في تاريخ "إلى" (أو اليوم إن تُرك فارغًا) — لمعرفة الكمية المتوفرة في أي وقت سابق</span>
+        </div>
+
+        <div id="report-content"></div>
+      </main>
+    </div>
+  </div>
+  <div id="modal-root"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="../js/db/db.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/notification-service.js"></script>
+  <script src="../js/services/inventory-service.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/components/data-table.js"></script>
+  <script src="../js/components/chart-renderer.js"></script>
+  <script src="../js/components/export-utils.js"></script>
+  <script src="../js/components/kpi-bar.js"></script>
+  <script src="../js/pages/inventory-reports-page.js"></script>
+</body>
+</html>

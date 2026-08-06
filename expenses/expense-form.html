@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تكويد مصروف | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2 id="form-title">تكويد مصروف جديد</h2>
+          <a href="expense-list.html" class="btn btn--outline">→ العودة للسجل</a>
+        </div>
+        <div class="card">
+          <form id="expense-form" class="form-grid" novalidate>
+            <div class="form-group">
+              <label for="category">نوع المصروف <span class="required">*</span></label>
+              <select id="category" class="form-control"></select>
+            </div>
+            <div class="form-group">
+              <label for="amount">المبلغ <span class="required">*</span></label>
+              <input type="number" id="amount" class="form-control" min="0" step="0.01" />
+              <span class="form-error">أدخل مبلغًا صحيحًا</span>
+            </div>
+            <div class="form-group">
+              <label for="date">التاريخ <span class="required">*</span></label>
+              <input type="date" id="date" class="form-control" />
+              <span class="form-error">التاريخ مطلوب</span>
+            </div>
+            <div class="form-group">
+              <label for="hasTaxInvoice">فاتورة ضريبية؟</label>
+              <select id="hasTaxInvoice" class="form-control">
+                <option value="no">لا</option>
+                <option value="yes">نعم</option>
+              </select>
+            </div>
+            <div class="form-group form-group--full" id="tax-breakdown-group" style="display:none;">
+              <label>تفاصيل الضريبة (15%)</label>
+              <div class="tax-breakdown-box">
+                <span>المبلغ قبل الضريبة: <strong id="tax-before-label">-</strong></span>
+                <span>قيمة الضريبة: <strong id="tax-value-label">-</strong></span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="paymentMethod">طريقة الدفع</label>
+              <select id="paymentMethod" class="form-control">
+                <option value="cash">نقدي</option>
+                <option value="transfer">تحويل بنكي</option>
+                <option value="cheque">شيك</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="vendor">المستفيد/المورّد</label>
+              <input type="text" id="vendor" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label for="status">الحالة</label>
+              <select id="status" class="form-control">
+                <option value="approved">معتمد</option>
+                <option value="pending">قيد الاعتماد</option>
+              </select>
+            </div>
+            <div class="form-group form-group--full">
+              <label for="notes">ملاحظات</label>
+              <textarea id="notes" class="form-control" rows="3"></textarea>
+            </div>
+
+            <div class="form-group form-group--full" style="border-top:1px solid var(--color-border); padding-top: var(--spacing-3);">
+              <label>ربط بصنف مخزون (اختياري — يضيف الكمية تلقائيًا كحركة "وارد" في المخزون، مثل شراء أعلاف/أدوية)</label>
+            </div>
+            <div class="form-group">
+              <label for="linkedInventoryItemId">الصنف</label>
+              <select id="linkedInventoryItemId" class="form-control">
+                <option value="">-- بدون ربط بالمخزون --</option>
+              </select>
+            </div>
+            <div class="form-group" id="linked-quantity-group" style="display:none;">
+              <label for="linkedQuantity">الكمية</label>
+              <input type="number" id="linkedQuantity" class="form-control" />
+              <span class="form-error">أدخل كمية صحيحة</span>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn--success" id="save-btn">حفظ</button>
+              <a href="expense-list.html" class="btn btn--outline">إلغاء</a>
+              <button type="button" class="btn btn--danger" id="delete-btn" style="display:none; margin-right:auto;">حذف</button>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div id="modal-root"></div>
+
+  <script src="../js/db/db.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/notification-service.js"></script>
+  <script src="../js/services/expense-service.js"></script>
+  <script src="../js/services/category-service.js"></script>
+  <script src="../js/services/inventory-service.js"></script>
+  <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/pages/expense-form-page.js"></script>
+</body>
+</html>

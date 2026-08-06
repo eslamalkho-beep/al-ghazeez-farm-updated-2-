@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>سجل الولادات | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+  <style>
+    .offspring-row {
+      display: grid;
+      grid-template-columns: 90px 1fr 1fr;
+      gap: var(--spacing-2);
+      align-items: center;
+      padding: 10px 12px;
+      background: var(--color-bg);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+    }
+    .offspring-row .offspring-label {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--color-text-secondary);
+    }
+    .offspring-gender-toggle {
+      display: flex;
+      gap: 6px;
+    }
+    .offspring-gender-btn {
+      flex: 1;
+      padding: 8px 6px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--color-text-secondary);
+    }
+    .offspring-gender-btn.selected--male {
+      background: rgba(30,95,191,0.12);
+      border-color: var(--color-primary-blue);
+      color: var(--color-primary-blue);
+    }
+    .offspring-gender-btn.selected--female {
+      background: rgba(214,54,46,0.10);
+      border-color: var(--color-primary-red);
+      color: var(--color-primary-red-dark);
+    }
+    #offspring-list { margin-bottom: var(--spacing-3); }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2>سجل الولادات</h2>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn btn--outline" id="export-excel-btn">تصدير Excel</button>
+            <button type="button" class="btn btn--outline" id="export-pdf-btn">تصدير PDF</button>
+            <a href="herd-list.html" class="btn btn--outline">→ سجل القطيع</a>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom: var(--spacing-4);">
+          <div class="card__header"><h3>تسجيل ولادة جديدة</h3></div>
+
+          <form id="birth-form" class="form-grid" novalidate>
+            <div class="form-group">
+              <label for="motherId">الأم <span class="required">*</span></label>
+              <select id="motherId" class="form-control"></select>
+              <span class="form-error">يرجى اختيار الأم</span>
+            </div>
+
+            <div class="form-group">
+              <label for="birthDate">تاريخ الولادة <span class="required">*</span></label>
+              <input type="date" id="birthDate" class="form-control" />
+              <span class="form-error">التاريخ مطلوب</span>
+            </div>
+
+            <div class="form-group form-group--full">
+              <label for="offspringCount">عدد المواليد <span class="required">*</span></label>
+              <input type="number" id="offspringCount" class="form-control" min="1" max="10" value="1" />
+            </div>
+
+            <div class="form-group form-group--full">
+              <label>تفاصيل كل مولود (الجنس والوزن)</label>
+              <div id="offspring-list"></div>
+            </div>
+
+            <div class="form-group form-group--full">
+              <label for="vetNotes">ملاحظات المولد / البيطري</label>
+              <textarea id="vetNotes" class="form-control" rows="2"></textarea>
+            </div>
+
+            <div class="form-group form-group--full" style="flex-direction:row; align-items:center; gap:8px;">
+              <input type="checkbox" id="autoRegister" checked style="width:16px; height:16px;" />
+              <label for="autoRegister" style="margin:0;">تكويد كل مولود تلقائيًا كحيوان جديد في سجل القطيع</label>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn--success" id="save-birth-btn">حفظ الولادة</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card__header" style="padding: 0 4px;"><h3>سجل الولادات السابقة</h3></div>
+        <div id="births-table"></div>
+      </main>
+    </div>
+  </div>
+
+  <div id="modal-root"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="../js/db/db.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/notification-service.js"></script>
+  <script src="../js/services/animal-service.js"></script>
+  <script src="../js/services/birth-service.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/components/data-table.js"></script>
+  <script src="../js/components/export-utils.js"></script>
+  <script src="../js/pages/births-page.js"></script>
+</body>
+</html>

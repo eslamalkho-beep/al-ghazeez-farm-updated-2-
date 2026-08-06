@@ -4,19 +4,32 @@
 const SIDEBAR_LINKS = [
   { key: 'dashboard', label: 'لوحة التحكم', href: getRootPath('dashboard.html'), icon: 'grid' },
   { key: 'herd', label: 'إدارة القطيع', href: getRootPath('herd/herd-list.html'), icon: 'sheep' },
+  { key: 'bulk', label: 'الشراء والبيع الجماعي', href: getRootPath('bulk/bulk-batches.html'), icon: 'bulk' },
   { key: 'expenses', label: 'المصروفات', href: getRootPath('expenses/expense-list.html'), icon: 'expense' },
   { key: 'revenues', label: 'الإيرادات', href: getRootPath('revenues/revenue-list.html'), icon: 'revenue' },
   { key: 'purchases', label: 'المشتريات', href: getRootPath('purchases/purchase-list.html'), icon: 'cart' },
-  { key: 'bulk', label: 'الشراء والبيع الجماعي', href: getRootPath('bulk/bulk-batches.html'), icon: 'bulk' },
-  { key: 'categories', label: 'تكويدات', href: getRootPath('categories/categories.html'), icon: 'tag' },
-  { key: 'parties', label: 'العملاء والموردون', href: getRootPath('parties/parties.html'), icon: 'contacts' },
   { key: 'inventory', label: 'المخزون والمستلزمات', href: getRootPath('inventory/inventory-items.html'), icon: 'warehouse' },
   { key: 'accounting', label: 'المحاسبة', href: getRootPath('accounting/chart-of-accounts.html'), icon: 'ledger' },
+  { key: 'parties', label: 'العملاء والموردون', href: getRootPath('parties/parties.html'), icon: 'contacts' },
+  { key: 'categories', label: 'تكويدات البنود', href: getRootPath('categories/categories.html'), icon: 'tag' },
   { key: 'employees', label: 'الموظفون', href: getRootPath('employees/employee-list.html'), icon: 'users' },
   { key: 'custody', label: 'إدارة العهد', href: getRootPath('custody/custody-list.html'), icon: 'box' },
-  { key: 'notifications', label: 'الإشعارات', href: getRootPath('notifications/notifications.html'), icon: 'bell' },
   { key: 'reports', label: 'التقارير', href: getRootPath('reports/herd-reports.html'), icon: 'chart' },
+  { key: 'notifications', label: 'الإشعارات', href: getRootPath('notifications/notifications.html'), icon: 'bell' },
   { key: 'settings', label: 'الإعدادات', href: getRootPath('settings/settings.html'), icon: 'gear' },
+];
+
+// تجميع منطقي للقائمة الجانبية — لوحة التحكم وحدها تُعرض مستقلة أعلى القائمة، والبقية داخل مجموعات قابلة
+// للطي (عنصر <details> أصلي لا يحتاج جافاسكربت إضافيًا للفتح/الإغلاق). ترتيب المفاتيح هنا مستقل عن ترتيبها
+// في SIDEBAR_LINKS أعلاه — SIDEBAR_LINKS يبقى المصدر الوحيد للـ href/icon/label وفحص الصلاحيات
+const SIDEBAR_GROUPS = [
+  { id: 'assets', label: 'الأصول', keys: ['herd', 'bulk'] },
+  { id: 'finance', label: 'المالية', keys: ['expenses', 'revenues', 'purchases'] },
+  { id: 'warehouses', label: 'المخازن', keys: ['inventory'] },
+  { id: 'accounting', label: 'المحاسبة', keys: ['accounting'] },
+  { id: 'parties', label: 'الأطراف والتكويدات', keys: ['parties', 'categories'] },
+  { id: 'team', label: 'الفريق', keys: ['employees', 'custody'] },
+  { id: 'system', label: 'النظام', keys: ['reports', 'notifications', 'settings'] },
 ];
 
 const SIDEBAR_ICONS = {
@@ -46,17 +59,52 @@ function getRootPath(target) {
   return isNested ? '../' + target : target;
 }
 
+// حالة فتح/إغلاق مجموعات القائمة الجانبية — تُحفظ في localStorage فتبقى كما تركها المستخدم بين الصفحات
+// (بعكس الاعتماد فقط على "المجموعة الحالية مفتوحة" في كل تحميل صفحة، وهو ما يُستخدم فقط كافتراضي أول مرة)
+function _readSidebarGroupState() {
+  try {
+    return JSON.parse(localStorage.getItem('sidebarGroupState') || '{}');
+  } catch {
+    return {};
+  }
+}
+
 function renderSidebar(activePageKey) {
   const container = document.getElementById('sidebar-container');
   if (!container) return;
 
   const visibleLinks = SIDEBAR_LINKS.filter(link => link.key === 'dashboard' || hasModuleAccess(link.key));
-  const linksHtml = visibleLinks.map(link => `
+  const linksByKey = Object.fromEntries(visibleLinks.map(l => [l.key, l]));
+
+  const renderLink = (link) => `
     <a href="${link.href}" class="sidebar__link ${link.key === activePageKey ? 'active' : ''}">
       ${SIDEBAR_ICONS[link.icon]}
       <span>${link.label}</span>
     </a>
-  `).join('');
+  `;
+
+  const storedState = _readSidebarGroupState();
+  const groupsHtml = SIDEBAR_GROUPS.map(group => {
+    const groupLinks = group.keys.map(k => linksByKey[k]).filter(Boolean);
+    if (!groupLinks.length) return ''; // كل روابط المجموعة مخفية عن هذا المستخدم (صلاحيات owner محدودة)
+
+    const containsActive = groupLinks.some(l => l.key === activePageKey);
+    const isOpen = storedState[group.id] !== undefined ? storedState[group.id] : containsActive;
+
+    return `
+      <details class="sidebar__group" data-group-id="${group.id}" ${isOpen ? 'open' : ''}>
+        <summary class="sidebar__group-title">
+          <span>${group.label}</span>
+          <svg class="sidebar__group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </summary>
+        <div class="sidebar__group-links">
+          ${groupLinks.map(renderLink).join('')}
+        </div>
+      </details>
+    `;
+  }).join('');
+
+  const dashboardLink = linksByKey['dashboard'];
 
   container.innerHTML = `
     <aside class="sidebar" id="app-sidebar">
@@ -68,11 +116,20 @@ function renderSidebar(activePageKey) {
         </div>
       </div>
       <nav class="sidebar__nav">
-        ${linksHtml}
+        ${dashboardLink ? renderLink(dashboardLink) : ''}
+        ${groupsHtml}
       </nav>
     </aside>
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
   `;
+
+  container.querySelectorAll('.sidebar__group').forEach(groupEl => {
+    groupEl.addEventListener('toggle', () => {
+      const state = _readSidebarGroupState();
+      state[groupEl.dataset.groupId] = groupEl.open;
+      localStorage.setItem('sidebarGroupState', JSON.stringify(state));
+    });
+  });
 
   const overlay = document.getElementById('sidebar-overlay');
   overlay.addEventListener('click', closeSidebar);

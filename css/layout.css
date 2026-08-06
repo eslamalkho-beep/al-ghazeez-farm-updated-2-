@@ -92,6 +92,49 @@
   flex-shrink: 0;
 }
 
+/* ===== مجموعات القائمة الجانبية (details/summary أصلية — بلا جافاسكربت إضافي للطي) ===== */
+.sidebar__group {
+  margin-bottom: 2px;
+}
+
+.sidebar__group-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+  padding: 10px var(--spacing-3) 6px;
+  cursor: pointer;
+  color: rgba(255,255,255,0.5);
+  font-size: 11px;
+  font-weight: 700;
+  list-style: none;
+  user-select: none;
+}
+
+.sidebar__group-title::-webkit-details-marker {
+  display: none;
+}
+
+.sidebar__group-title:hover {
+  color: rgba(255,255,255,0.85);
+}
+
+.sidebar__group-chevron {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.sidebar__group[open] > .sidebar__group-title .sidebar__group-chevron {
+  transform: rotate(180deg);
+}
+
+.sidebar__group-links {
+  display: flex;
+  flex-direction: column;
+}
+
 .sidebar__toggle {
   display: none;
 }

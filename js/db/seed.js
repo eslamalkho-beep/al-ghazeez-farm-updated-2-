@@ -6,9 +6,15 @@ async function seedDatabaseIfEmpty() {
   await _seedDefaultCategoriesIfEmpty();
   await _seedDefaultChartOfAccountsIfEmpty();
   await _seedStockCountAccountsIfMissing();
+  await _seedPurchaseAccountsIfMissing();
   await _linkDefaultExpenseCategoriesToAccountsIfMissing();
+  await _linkDefaultRevenueCategoriesToAccountsIfMissing();
+  await _linkDefaultPurchaseCategoriesToAccountsIfMissing();
   await _postExpenseJournalEntriesIfMissing();
   await _migrateLegacyBulkDataIfNeeded();
+  await _postRevenueJournalEntriesIfMissing();
+  await _postPurchaseJournalEntriesIfMissing();
+  await _postBulkBatchJournalEntriesIfMissing();
 
   const users = await dbGetAll('Users');
   if (users.length > 0) return; // تمت التهيئة من قبل
@@ -114,6 +120,23 @@ async function _seedStockCountAccountsIfMissing() {
   }
 }
 
+// منفصلة عن باقي التهيئة وتُفحص بكود الحساب لا بفراغ المخزن (بنفس مبدأ _seedStockCountAccountsIfMissing) —
+// حساب "مشتريات حيوانات" مطلوب لربط بند المشتريات الافتراضي "شراء حيوانات" (لا يوجد حساب مناسب مسبقًا في
+// شجرة الحسابات الأساسية له، بعكس بقية بنود المشتريات التي تُعاد استخدام حسابات مصروفات موجودة أصلًا)
+async function _seedPurchaseAccountsIfMissing() {
+  const existingAccounts = await dbGetAll('ChartOfAccounts');
+  const existingCodes = new Set(existingAccounts.map(a => a.code));
+
+  const additions = [
+    { code: '5045', name: 'مشتريات حيوانات', type: 'expense' },
+  ];
+
+  for (const account of additions) {
+    if (existingCodes.has(account.code)) continue;
+    await dbAdd('ChartOfAccounts', { ...account, normalBalance: ACCOUNT_NORMAL_BALANCE_BY_TYPE[account.type] });
+  }
+}
+
 // تربط بنود المصروفات الافتراضية السبعة (بالاسم المطابق تمامًا) بحساباتها المقابلة في شجرة الحسابات —
 // مفحوصة لكل بند على حدة (بلا `linkedAccountId` بعد)، فلا تكتب فوق ربط اختاره المستخدم بنفسه من شاشة التكويدات
 async function _linkDefaultExpenseCategoriesToAccountsIfMissing() {
@@ -132,6 +155,41 @@ async function _linkDefaultExpenseCategoriesToAccountsIfMissing() {
   }
 }
 
+// نفس مبدأ _linkDefaultExpenseCategoriesToAccountsIfMissing لكن لبنود الإيراد الافتراضية الستة — "بيع حيوان"
+// وحده له حساب مخصص في شجرة الحسابات الأساسية؛ الباقي يُربَط صراحة بـ"إيرادات أخرى" (بدل تركه بلا ربط والاعتماد
+// على fallback الخدمة ضمنيًا) حتى يظهر الربط الفعلي بوضوح من شاشة التكويدات وقابلاً للتعديل يدويًا لاحقًا
+async function _linkDefaultRevenueCategoriesToAccountsIfMissing() {
+  const defaultCategoryAccountCodes = {
+    'بيع حيوان': '4000', 'بيع حليب': '4020', 'بيع صوف/شعر': '4020', 'بيع سماد': '4020', 'خدمات تلقيح': '4020', 'أخرى': '4020',
+  };
+
+  const [categories, accounts] = await Promise.all([dbGetAll('Categories'), dbGetAll('ChartOfAccounts')]);
+  for (const category of categories) {
+    if (category.type !== 'revenue' || category.linkedAccountId) continue;
+    const accountCode = defaultCategoryAccountCodes[category.name];
+    if (!accountCode) continue;
+    const account = getAccountByCode(accountCode, accounts);
+    if (account) await dbUpdate('Categories', category.id, { linkedAccountId: account.id });
+  }
+}
+
+// نفس مبدأ _linkDefaultExpenseCategoriesToAccountsIfMissing لكن لبنود المشتريات الافتراضية الأربعة —
+// "شراء حيوانات" يُربَط بحساب "مشتريات حيوانات" المُضاف في _seedPurchaseAccountsIfMissing أعلاه
+async function _linkDefaultPurchaseCategoriesToAccountsIfMissing() {
+  const defaultCategoryAccountCodes = {
+    'أعلاف ومركزات': '5000', 'شراء حيوانات': '5045', 'معدات ومستلزمات': '5090', 'أخرى': '5080',
+  };
+
+  const [categories, accounts] = await Promise.all([dbGetAll('Categories'), dbGetAll('ChartOfAccounts')]);
+  for (const category of categories) {
+    if (category.type !== 'purchase' || category.linkedAccountId) continue;
+    const accountCode = defaultCategoryAccountCodes[category.name];
+    if (!accountCode) continue;
+    const account = getAccountByCode(accountCode, accounts);
+    if (account) await dbUpdate('Categories', category.id, { linkedAccountId: account.id });
+  }
+}
+
 // ترحيل بأثر رجعي لمرة واحدة فعليًا: لكل مصروف غير محذوف بلا journalEntryId وبمبلغ > 0 — يُنشئ له قيدًا
 // يعكس حالته الحالية (نفس منطق syncExpenseJournalEntry في expense-service.js)، حتى تكتمل تقارير المحاسبة
 // للبيانات الموجودة مسبقًا. يُفحص بمعزل عن باقي التهيئة (لكل مصروف ناقص قيد لا "هل Expenses فارغ؟")
@@ -139,6 +197,31 @@ async function _postExpenseJournalEntriesIfMissing() {
   const pendingExpenses = await dbQuery('Expenses', e => e.status !== 'deleted' && !e.journalEntryId && Number(e.amount) > 0);
   for (const expense of pendingExpenses) {
     await syncExpenseJournalEntry(expense.id);
+  }
+}
+
+// نفس مبدأ _postExpenseJournalEntriesIfMissing تمامًا، لكن للإيرادات
+async function _postRevenueJournalEntriesIfMissing() {
+  const pendingRevenues = await dbQuery('Revenues', r => r.status !== 'deleted' && !r.journalEntryId && Number(r.amount) > 0);
+  for (const revenue of pendingRevenues) {
+    await syncRevenueJournalEntry(revenue.id);
+  }
+}
+
+// نفس مبدأ _postExpenseJournalEntriesIfMissing تمامًا، لكن للمشتريات
+async function _postPurchaseJournalEntriesIfMissing() {
+  const pendingPurchases = await dbQuery('Purchases', p => p.status !== 'deleted' && !p.journalEntryId && Number(p.amount) > 0);
+  for (const purchase of pendingPurchases) {
+    await syncPurchaseJournalEntry(purchase.id);
+  }
+}
+
+// نفس المبدأ لدفعات الشراء والبيع الجماعي — يُنفَّذ بعد _migrateLegacyBulkDataIfNeeded عمدًا حتى تُرحَّل
+// محاسبيًا أيضًا أي دفعات جديدة نتجت عن ترحيل البيانات القديمة (BulkPurchases/BulkSales/BulkExpenses)
+async function _postBulkBatchJournalEntriesIfMissing() {
+  const pendingBatches = await dbQuery('BulkBatches', b => b.status !== 'deleted' && !b.journalEntryId);
+  for (const batch of pendingBatches) {
+    await syncBulkBatchJournalEntry(batch.id);
   }
 }
 

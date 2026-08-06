@@ -134,6 +134,8 @@ async function _handleSubmit(e) {
       savedPurchaseId = await createPurchase(data);
     }
 
+    await syncPurchaseJournalEntry(savedPurchaseId);
+
     const becamePending = data.status === 'pending' && (isNewPurchase || _originalPurchaseStatus !== 'pending');
     if (becamePending) {
       await createNotification({
@@ -154,7 +156,8 @@ async function _handleSubmit(e) {
 }
 
 function _handleDelete() {
-  confirmDelete('هل أنت متأكد من حذف هذا المشترى؟', async () => {
+  confirmDelete('هل أنت متأكد من حذف هذا المشترى؟ سيُحذف أيضًا القيد المحاسبي المرتبط به إن وُجد.', async () => {
+    await reversePurchaseJournalEntry(_editingPurchaseId);
     await deletePurchase(_editingPurchaseId);
     showToast('تم الحذف بنجاح', 'success');
     setTimeout(() => { window.location.href = 'purchase-list.html'; }, 400);

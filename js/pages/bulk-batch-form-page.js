@@ -274,11 +274,15 @@ async function _handleSave() {
   saveBtn.textContent = 'جاري الحفظ...';
 
   try {
+    let savedBatchId = _editingBatchId;
     if (_editingBatchId) {
       await updateBulkBatch(_editingBatchId, data);
     } else {
-      await createBulkBatch(data);
+      savedBatchId = await createBulkBatch(data);
     }
+
+    await syncBulkBatchJournalEntry(savedBatchId);
+
     showToast('تم الحفظ بنجاح', 'success');
     setTimeout(() => { window.location.href = 'bulk-batches.html'; }, 400);
   } catch (err) {
@@ -289,7 +293,8 @@ async function _handleSave() {
 }
 
 function _handleDelete() {
-  confirmDelete('هل أنت متأكد من حذف هذه الدفعة بالكامل (بنود الشراء والبيع والمصاريف)؟ لا يمكن التراجع عن هذا الإجراء.', async () => {
+  confirmDelete('هل أنت متأكد من حذف هذه الدفعة بالكامل (بنود الشراء والبيع والمصاريف)؟ سيُحذف أيضًا القيد المحاسبي المرتبط بها إن وُجد. لا يمكن التراجع عن هذا الإجراء.', async () => {
+    await reverseBulkBatchJournalEntry(_editingBatchId);
     await deleteBulkBatch(_editingBatchId);
     showToast('تم حذف الدفعة', 'success');
     setTimeout(() => { window.location.href = 'bulk-batches.html'; }, 400);

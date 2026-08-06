@@ -70,4 +70,8 @@ function renderHeader(pageTitle) {
   if (typeof updateNotificationBadge === 'function') {
     updateNotificationBadge();
   }
+
+  if (typeof renderQuickActionFab === 'function') {
+    renderQuickActionFab();
+  }
 }

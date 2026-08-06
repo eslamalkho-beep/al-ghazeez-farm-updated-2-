@@ -157,12 +157,13 @@ async function _handleSubmit(e) {
 
   try {
     let previousAnimalId = null;
+    let savedRevenueId = _editingRevenueId;
     if (_editingRevenueId) {
       const existing = await dbGet('Revenues', _editingRevenueId);
       previousAnimalId = existing ? existing.animalId : null;
       await updateRevenue(_editingRevenueId, data);
     } else {
-      await createRevenue(data);
+      savedRevenueId = await createRevenue(data);
     }
 
     if (previousAnimalId && previousAnimalId !== newAnimalId) {
@@ -171,6 +172,8 @@ async function _handleSubmit(e) {
     if (newAnimalId) {
       await updateAnimal(newAnimalId, { status: 'sold' });
     }
+
+    await syncRevenueJournalEntry(savedRevenueId);
 
     showToast('تم الحفظ بنجاح', 'success');
     setTimeout(() => { window.location.href = 'revenue-list.html'; }, 400);
@@ -182,8 +185,9 @@ async function _handleSubmit(e) {
 }
 
 function _handleDelete() {
-  confirmDelete('هل أنت متأكد من حذف هذا الإيراد؟', async () => {
+  confirmDelete('هل أنت متأكد من حذف هذا الإيراد؟ سيُحذف أيضًا القيد المحاسبي المرتبط به إن وُجد.', async () => {
     const existing = await dbGet('Revenues', _editingRevenueId);
+    await reverseRevenueJournalEntry(_editingRevenueId);
     await deleteRevenue(_editingRevenueId);
     if (existing && existing.animalId) {
       await updateAnimal(existing.animalId, { status: 'alive' });

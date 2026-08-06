@@ -1,14 +1,17 @@
 // js/pages/categories-page.js
 
 let _allCategoriesCache = [];
-let _expenseAccountsCache = [];
+let _expenseAccountsCache = []; // تُستخدم لبنود المصروفات وأيضًا بنود المشتريات (نفس طبيعة القيد: مدين حساب مصروف)
+let _revenueAccountsCache = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth('categories');
   renderSidebar('categories');
   renderHeader('تكويدات البنود');
 
-  _expenseAccountsCache = (await getAllAccounts()).filter(a => a.type === 'expense');
+  const allAccounts = await getAllAccounts();
+  _expenseAccountsCache = allAccounts.filter(a => a.type === 'expense');
+  _revenueAccountsCache = allAccounts.filter(a => a.type === 'revenue');
   await _refreshCategories();
 
   document.getElementById('add-category-btn').addEventListener('click', () => _openCategoryModal(null));
@@ -55,12 +58,9 @@ function _openCategoryModal(category) {
         <label>اسم البند <span class="required">*</span></label>
         <input type="text" id="m-name" class="form-control" value="${category?.name || ''}" placeholder="مثال: أعلاف" />
       </div>
-      <div class="form-group form-group--full" id="linked-account-group" style="display:none;">
+      <div class="form-group form-group--full" id="linked-account-group">
         <label>الحساب المحاسبي المرتبط (اختياري)</label>
-        <select id="m-linkedAccountId" class="form-control">
-          <option value="">-- بدون ربط (يُرحَّل تلقائيًا لحساب "مصروفات أخرى") --</option>
-          ${_expenseAccountsCache.map(a => `<option value="${a.id}" ${String(category?.linkedAccountId) === String(a.id) ? 'selected' : ''}>${a.code} - ${a.name}</option>`).join('')}
-        </select>
+        <select id="m-linkedAccountId" class="form-control"></select>
       </div>
       ${isEdit ? `
       <div class="form-group form-group--full" style="border-top:1px solid var(--color-border); padding-top: var(--spacing-3);">
@@ -88,7 +88,7 @@ function _openCategoryModal(category) {
         return;
       }
 
-      const linkedAccountId = (type === 'expense' && linkedAccountIdValue) ? Number(linkedAccountIdValue) : null;
+      const linkedAccountId = linkedAccountIdValue ? Number(linkedAccountIdValue) : null;
 
       if (isEdit) {
         await updateCategory(category.id, { name, linkedAccountId });
@@ -102,11 +102,17 @@ function _openCategoryModal(category) {
   });
 
   const typeSelect = document.getElementById('m-type');
-  const toggleLinkedAccountGroup = () => {
-    document.getElementById('linked-account-group').style.display = typeSelect.value === 'expense' ? '' : 'none';
+  const accountSelect = document.getElementById('m-linkedAccountId');
+  // بنود المصروفات والمشتريات كلاهما يُرحَّلان مدينًا لحساب مصروف (نفس القائمة)، وبنود الإيرادات لحساب إيراد
+  const _accountsForType = (type) => (type === 'revenue' ? _revenueAccountsCache : _expenseAccountsCache);
+  const _fallbackLabelForType = (type) => (type === 'revenue' ? 'إيرادات أخرى' : 'مصروفات أخرى');
+  const renderAccountOptions = () => {
+    const type = typeSelect.value;
+    accountSelect.innerHTML = `<option value="">-- بدون ربط (يُرحَّل تلقائيًا لحساب "${_fallbackLabelForType(type)}") --</option>` +
+      _accountsForType(type).map(a => `<option value="${a.id}" ${String(category?.linkedAccountId) === String(a.id) ? 'selected' : ''}>${a.code} - ${a.name}</option>`).join('');
   };
-  typeSelect.addEventListener('change', toggleLinkedAccountGroup);
-  toggleLinkedAccountGroup();
+  typeSelect.addEventListener('change', renderAccountOptions);
+  renderAccountOptions();
 
   if (isEdit) {
     document.getElementById('delete-category-btn').addEventListener('click', () => {

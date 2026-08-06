@@ -1,6 +1,10 @@
 // js/services/accounting-service.js
-// محاسبة حقيقية بقيد مزدوج: شجرة حسابات + قيود يومية. مستقلة تمامًا عن باقي الوحدات —
-// لا ترحيل تلقائي من المصروفات/الإيرادات/المشتريات/الجملة/العهد، القيود كلها يدوية في هذه المرحلة.
+// محاسبة حقيقية بقيد مزدوج: شجرة حسابات + قيود يومية. هذا الملف نفسه لا يعرف شيئًا عن المصروفات/الإيرادات/
+// إلخ — الترحيل التلقائي مُنفَّذ في كل خدمة مصدر (sync*JournalEntry في expense-service.js/revenue-service.js/
+// purchase-service.js/bulk-batch-service.js، وكذلك عند اعتماد الجرد في stock-count-service.js)، وكلها تستدعي
+// الدوال العامة هنا (createJournalEntry/updateJournalEntry/deleteJournalEntry/getAccountByCode...). عهد
+// الموظفين (CustodyItems) لا يزال بلا ترحيل تلقائي؛ القيود اليدوية من هذه الصفحة تبقى متاحة دومًا لأي
+// تسوية أو تصحيح إضافي لا يغطيه الترحيل التلقائي.
 
 const ACCOUNT_TYPE_LABELS = {
   asset: 'أصول',

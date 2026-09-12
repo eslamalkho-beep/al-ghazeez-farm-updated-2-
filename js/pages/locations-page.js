@@ -5,7 +5,7 @@ let _allAnimalsForLocationsCache = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth('herd');
-  renderSidebar('herd');
+  renderSidebar('herd-locations');
   renderHeader('الحظائر والمواقع');
 
   _allAnimalsForLocationsCache = await getAllAnimals();

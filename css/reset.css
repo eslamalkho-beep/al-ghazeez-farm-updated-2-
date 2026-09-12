@@ -52,3 +52,12 @@ table {
   border-collapse: collapse;
   width: 100%;
 }
+
+/* مؤشر تركيز موحّد لكل عناصر التفاعل — button/input/select/textarea فقدت outline الافتراضي أعلاه بلا بديل،
+   فمستخدم لوحة المفاتيح (Tab) كان يفقد أي إشارة بصرية لمكان التركيز الحالي. :focus-visible يظهر الحلقة
+   عند التنقل بالكيبورد فقط (لا عند الضغط بالماوس)، فلا يغيّر أي شكل مرئي حالي بالنقر العادي */
+:focus-visible {
+  outline: 2px solid var(--color-primary-blue);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}

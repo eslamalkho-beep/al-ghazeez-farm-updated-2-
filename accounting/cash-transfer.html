@@ -21,12 +21,7 @@
           <h2>تحويل صندوق ↔ بنك</h2>
         </div>
 
-        <div class="report-tabs">
-          <a href="chart-of-accounts.html" class="report-tab">شجرة الحسابات</a>
-          <a href="journal-entries.html" class="report-tab">القيود اليومية</a>
-          <span class="report-tab active">تحويل صندوق ↔ بنك</span>
-          <a href="../reports/accounting-reports.html" class="report-tab">التقارير المحاسبية</a>
-        </div>
+        
 
         <div class="card" id="transfer-form-card" style="margin-bottom: var(--spacing-4);">
           <div class="card__header"><h3>تحويل جديد</h3></div>
@@ -72,9 +67,10 @@
   <div id="modal-root"></div>
 
   <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
   <script src="../js/services/auth-service.js"></script>
-  <script src="../js/services/notification-service.js"></script>
   <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/services/period-service.js"></script>
   <script src="../js/utils/validators.js"></script>
   <script src="../js/utils/formatters.js"></script>
   <script src="../js/components/sidebar.js"></script>

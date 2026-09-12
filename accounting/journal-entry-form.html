@@ -40,6 +40,12 @@
       .batch-line-row--je { grid-template-columns: 1fr 1fr; }
       .batch-summary-box { grid-template-columns: repeat(2, 1fr); }
     }
+    .sc-status-banner {
+      padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 700; margin-bottom: var(--spacing-3);
+      display: none;
+    }
+    .sc-status-banner--approved { background: rgba(30,158,90,0.1); color: var(--color-primary-green-dark); }
+    .sc-status-banner--draft { background: rgba(232,169,59,0.15); color: #8a5a10; }
   </style>
 </head>
 <body>
@@ -54,6 +60,8 @@
         </div>
 
         <div class="card">
+          <div id="status-banner" class="sc-status-banner"></div>
+
           <form id="entry-form" class="form-grid" novalidate onsubmit="return false;">
             <div class="form-group">
               <label>رقم القيد</label>
@@ -94,6 +102,8 @@
 
           <div class="form-actions">
             <button type="button" class="btn btn--success" id="save-btn">حفظ</button>
+            <button type="button" class="btn btn--success" id="post-btn" style="display:none;">ترحيل</button>
+            <button type="button" class="btn btn--outline" id="revert-draft-btn" style="display:none;">إرجاع لمسودة</button>
             <a href="journal-entries.html" class="btn btn--outline">إلغاء</a>
             <button type="button" class="btn btn--danger" id="delete-btn" style="display:none; margin-right:auto;">حذف</button>
           </div>
@@ -105,9 +115,10 @@
   <div id="modal-root"></div>
 
   <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
   <script src="../js/services/auth-service.js"></script>
-  <script src="../js/services/notification-service.js"></script>
   <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/services/period-service.js"></script>
   <script src="../js/utils/validators.js"></script>
   <script src="../js/utils/formatters.js"></script>
   <script src="../js/components/sidebar.js"></script>

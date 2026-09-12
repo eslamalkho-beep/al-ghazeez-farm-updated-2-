@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>التسويات المحاسبية | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2>التسويات المحاسبية</h2>
+        </div>
+
+        
+
+        <div class="card__header" style="padding: 4px;"><h3>تسويات موجودة في وحدات أخرى</h3></div>
+        <div class="kpi-grid" id="adjustments-quick-links" style="grid-template-columns: repeat(3, 1fr); margin-bottom: var(--spacing-4);"></div>
+
+        <div class="card" id="new-adjustment-card" style="margin-bottom: var(--spacing-4);">
+          <div class="card__header"><h3>تسوية جديدة</h3></div>
+          <form id="adjustment-form" class="form-grid" novalidate>
+            <div class="form-group">
+              <label for="type">نوع التسوية <span class="required">*</span></label>
+              <select id="type" class="form-control">
+                <option value="accruedExpense">مصروف مستحق</option>
+                <option value="accruedRevenue">إيراد مستحق</option>
+                <option value="prepaidExpense">مصروف مقدم</option>
+                <option value="deferredRevenue">إيراد مقدم</option>
+                <option value="cashDifference">فرق صندوق</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="date">التاريخ <span class="required">*</span></label>
+              <input type="date" id="date" class="form-control" />
+              <span class="form-error">التاريخ مطلوب</span>
+            </div>
+            <div class="form-group">
+              <label for="amount">المبلغ <span class="required">*</span></label>
+              <input type="number" id="amount" class="form-control" min="0" step="0.01" />
+              <span class="form-error">أدخل مبلغًا صحيحًا</span>
+            </div>
+
+            <div class="form-group" id="category-account-group">
+              <label for="categoryAccountId" id="category-account-label">الحساب <span class="required">*</span></label>
+              <select id="categoryAccountId" class="form-control"></select>
+              <span class="form-error">يرجى اختيار الحساب</span>
+            </div>
+
+            <div class="form-group" id="cash-account-group">
+              <label for="cashAccountCode">الصندوق أو البنك <span class="required">*</span></label>
+              <select id="cashAccountCode" class="form-control"></select>
+              <span class="form-error">يرجى اختيار الصندوق أو البنك</span>
+            </div>
+
+            <div class="form-group" id="direction-group">
+              <label for="direction">اتجاه الفرق <span class="required">*</span></label>
+              <select id="direction" class="form-control">
+                <option value="shortage">عجز (نقص فعلي عن رصيد النظام)</option>
+                <option value="overage">فائض (زيادة فعلية عن رصيد النظام)</option>
+              </select>
+            </div>
+
+            <div class="form-group form-group--full">
+              <label for="description">الوصف</label>
+              <input type="text" id="description" class="form-control" />
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn--success" id="save-adjustment-btn">حفظ التسوية</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card__header" style="padding: 0 4px;"><h3>سجل التسويات</h3></div>
+        <div id="adjustments-table"></div>
+      </main>
+    </div>
+  </div>
+
+  <div id="modal-root"></div>
+
+  <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/services/adjustment-service.js"></script>
+  <script src="../js/services/period-service.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/quick-action-fab.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/components/data-table.js"></script>
+  <script src="../js/components/kpi-bar.js"></script>
+  <script src="../js/pages/adjustments-page.js"></script>
+</body>
+</html>

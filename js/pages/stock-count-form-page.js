@@ -11,7 +11,7 @@ let _isApproved = false;
 
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth('inventory');
-  renderSidebar('inventory');
+  renderSidebar('inventory-stock-counts');
   renderHeader('جرد مخزون');
 
   [_itemsCache, _movementsCache, _stockCountsCache] = await Promise.all([

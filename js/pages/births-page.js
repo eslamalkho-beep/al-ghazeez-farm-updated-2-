@@ -6,7 +6,7 @@ let _allBirthsCache = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth('herd');
-  renderSidebar('herd');
+  renderSidebar('herd-births');
   renderHeader('سجل الولادات');
 
   const allAnimals = await getAllAnimals();
@@ -111,7 +111,8 @@ async function _handleSubmit(e) {
   try {
     if (document.getElementById('autoRegister').checked && mother) {
       for (const offspring of offspringDetails) {
-        const code = await generateNextAnimalCode();
+        // المولود يرث نوع أمه فبادئة التكويد تتبع النوع (SH- للمواليد الأغنام / GO- للمواليد الماعز)
+        const code = await generateNextAnimalCode(mother.type);
         const newAnimalId = await createAnimal({
           code,
           type: mother.type,
@@ -136,7 +137,14 @@ async function _handleSubmit(e) {
       veterinarianNotes: document.getElementById('vetNotes').value.trim(),
     });
 
+    // إن كانت هذه الأم مسجَّلة بحالة حمل "قائمة" (سجل الحمل)، تُحوَّل تلقائيًا لـ"وضعت" حتى لا يستمر
+    // ظهورها في تنبيه "قرب الولادة" رغم وقوع الولادة فعليًا — انظر resolvePregnancyOnBirth
+    await resolvePregnancyOnBirth(Number(motherId), birthDate);
+
     showToast('تم تسجيل الولادة بنجاح', 'success');
+    // تحديث فوري لعداد جرس التنبيهات لو كان مولود بتكويد تلقائي غيّر عدد القطيع الحيّ (تنبيه "تغيّر عدد
+    // القطيع"، انظر alerts-service.js) — بلا حاجة لانتظار زيارة صفحة أخرى تُعيد رسم الهيدر
+    if (typeof refreshAlertsBadge === 'function') refreshAlertsBadge();
     document.getElementById('birth-form').reset();
     document.getElementById('birthDate').value = todayIso();
     document.getElementById('offspringCount').value = 1;

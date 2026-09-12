@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>بطاقة عميل/مورّد | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2>بطاقة عميل/مورّد</h2>
+          <a href="parties-hub.html" class="btn btn--outline">→ العملاء والموردون</a>
+        </div>
+
+        <div id="picker-box" class="card" style="margin-bottom: var(--spacing-4);">
+          <div class="card__header"><h3>اختر عميلاً أو مورّدًا أو شريكًا</h3></div>
+          <div style="padding: 0 var(--spacing-3) var(--spacing-3);">
+            <select id="picker-type-filter" class="form-control" style="max-width:220px;">
+              <option value="">الكل (عملاء وموردون وشركاء)</option>
+              <option value="client">العملاء فقط</option>
+              <option value="supplier">الموردون فقط</option>
+              <option value="partner">الشركاء فقط</option>
+            </select>
+          </div>
+          <div id="party-picker-grid" class="kpi-grid"></div>
+        </div>
+
+        <div id="card-box" style="display:none;">
+          <div class="card" style="margin-bottom: var(--spacing-4);">
+            <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+              <div id="card-avatar" style="font-size:44px;"></div>
+              <div style="flex:1; min-width:200px;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <h2 id="card-name" style="margin:0;"></h2>
+                  <span id="card-type-badge"></span>
+                  <span id="card-status-badge"></span>
+                </div>
+                <div style="color: var(--color-text-secondary); font-size:13px;" id="card-meta"></div>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <a id="card-statement-link" href="#" class="btn btn--outline btn--sm">📄 كشف حساب</a>
+              </div>
+            </div>
+            <div class="kpi-grid" id="card-kpis" style="margin-top: var(--spacing-4);"></div>
+            <div style="margin-top: var(--spacing-3); font-size:13px; color: var(--color-text-secondary);" id="card-last-ops"></div>
+          </div>
+
+          <div class="card">
+            <div class="card__header"><h3>السجل الزمني لجميع الحركات</h3></div>
+            <div id="card-timeline"></div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div id="modal-root"></div>
+
+  <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/revenue-service.js"></script>
+  <script src="../js/services/purchase-service.js"></script>
+  <script src="../js/services/fixed-asset-service.js"></script>
+  <script src="../js/services/party-service.js"></script>
+  <script src="../js/services/attachment-service.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/quick-action-fab.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/components/kpi-bar.js"></script>
+  <script src="../js/components/attachment-manager.js"></script>
+  <script src="../js/pages/party-card-page.js"></script>
+</body>
+</html>

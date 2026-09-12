@@ -24,14 +24,6 @@ async function createHealthRecord(data) {
     if (latest && latest.id === id && animal && animal.status === 'alive') {
       await updateAnimal(data.animalId, { healthStatus: data.resultingHealthStatus });
     }
-    if (data.resultingHealthStatus === 'sick' || data.resultingHealthStatus === 'underTreatment') {
-      await createNotification({
-        type: 'health',
-        title: `الحيوان ${animal ? animal.code : ''} يحتاج متابعة صحية`,
-        message: `تشخيص: ${data.diagnosis || '-'} — الحالة الصحية الآن: ${ANIMAL_HEALTH_LABELS[data.resultingHealthStatus]}`,
-        relatedEntityId: data.animalId,
-      });
-    }
   }
   return id;
 }
@@ -49,14 +41,6 @@ async function updateHealthRecord(id, data) {
 
     if (latest && latest.id === id && latest.resultingHealthStatus && animal && animal.status === 'alive') {
       await updateAnimal(before.animalId, { healthStatus: latest.resultingHealthStatus });
-    }
-    if (statusChanged && (data.resultingHealthStatus === 'sick' || data.resultingHealthStatus === 'underTreatment')) {
-      await createNotification({
-        type: 'health',
-        title: `الحيوان ${animal ? animal.code : ''} يحتاج متابعة صحية`,
-        message: `تشخيص: ${updated.diagnosis || '-'} — الحالة الصحية الآن: ${ANIMAL_HEALTH_LABELS[data.resultingHealthStatus]}`,
-        relatedEntityId: before.animalId,
-      });
     }
   }
 

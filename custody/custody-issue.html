@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>إصدار عهدة | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2>إصدار عهدة جديدة</h2>
+          <a href="custody-hub.html" class="btn btn--outline">→ العودة</a>
+        </div>
+        <div class="card">
+          <form id="issue-form" class="form-grid" novalidate>
+            <div class="form-group">
+              <label>رقم العهدة</label>
+              <input type="text" id="custodyNumber" class="form-control" disabled />
+            </div>
+            <div class="form-group">
+              <label for="date">التاريخ <span class="required">*</span></label>
+              <input type="date" id="date" class="form-control" />
+              <span class="form-error">التاريخ مطلوب</span>
+            </div>
+            <div class="form-group">
+              <label for="employeeId">الموظف <span class="required">*</span></label>
+              <select id="employeeId" class="form-control"></select>
+              <span class="form-error">اختر الموظف</span>
+            </div>
+            <div class="form-group">
+              <label for="custodyType">نوع العهدة <span class="required">*</span></label>
+              <select id="custodyType" class="form-control">
+                <option value="cash">نقدية</option>
+                <option value="equipment">معدات</option>
+                <option value="devices">أجهزة</option>
+                <option value="vehicle">سيارة</option>
+                <option value="tools">أدوات</option>
+                <option value="supplies">مستلزمات</option>
+                <option value="other">أخرى</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="expectedReturnDate">تاريخ الإرجاع المتوقع (اختياري)</label>
+              <input type="date" id="expectedReturnDate" class="form-control" />
+            </div>
+            <div class="form-group form-group--full">
+              <label for="purpose">الغرض من العهدة</label>
+              <input type="text" id="purpose" class="form-control" />
+            </div>
+
+            <div class="form-group form-group--full" id="cash-group" style="border-top:1px solid var(--color-border); padding-top: var(--spacing-3);">
+              <label style="margin-bottom:6px;">بيانات العهدة النقدية</label>
+            </div>
+            <div class="form-group" id="cash-account-group">
+              <label for="cashAccountCode">الصندوق أو البنك <span class="required">*</span></label>
+              <select id="cashAccountCode" class="form-control">
+                <option value="11101">الصندوق الرئيسي</option>
+                <option value="11102">بنك الرياض حـ/</option>
+              </select>
+            </div>
+            <div class="form-group" id="cash-amount-group">
+              <label for="amount">المبلغ <span class="required">*</span></label>
+              <input type="number" id="amount" class="form-control" min="0" step="0.01" />
+              <span class="form-error">أدخل مبلغًا صحيحًا</span>
+            </div>
+
+            <div class="form-group form-group--full" id="item-group" style="border-top:1px solid var(--color-border); padding-top: var(--spacing-3); display:none;">
+              <label style="margin-bottom:6px;">بيانات العهدة العينية (من المخزون)</label>
+            </div>
+            <div class="form-group" id="item-select-group" style="display:none;">
+              <label for="inventoryItemId">الصنف <span class="required">*</span></label>
+              <select id="inventoryItemId" class="form-control"></select>
+              <p id="item-stock-hint" style="font-size:12px; color: var(--color-text-secondary); margin-top:4px;"></p>
+            </div>
+            <div class="form-group" id="item-quantity-group" style="display:none;">
+              <label for="quantity">الكمية <span class="required">*</span></label>
+              <input type="number" id="quantity" class="form-control" min="0" step="1" />
+              <span class="form-error">أدخل كمية صحيحة</span>
+            </div>
+            <div class="form-group" id="item-value-group" style="display:none;">
+              <label for="unitValue">قيمة الوحدة</label>
+              <input type="number" id="unitValue" class="form-control" min="0" step="0.01" />
+            </div>
+            <div class="form-group" id="item-serial-group" style="display:none;">
+              <label for="serialNumber">الرقم التسلسلي (إن وجد)</label>
+              <input type="text" id="serialNumber" class="form-control" />
+            </div>
+            <div class="form-group form-group--full" id="item-total-group" style="display:none;">
+              <p>القيمة الإجمالية للعهدة: <strong id="item-total-label">0 ر.س</strong></p>
+            </div>
+
+            <div class="form-group form-group--full">
+              <label for="notes">ملاحظات</label>
+              <textarea id="notes" class="form-control" rows="2"></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn--success" id="save-btn">حفظ وإصدار العهدة</button>
+              <a href="custody-hub.html" class="btn btn--outline">إلغاء</a>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div id="modal-root"></div>
+
+  <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/services/inventory-service.js"></script>
+  <script src="../js/services/custody-service.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/quick-action-fab.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/pages/custody-issue-page.js"></script>
+</body>
+</html>

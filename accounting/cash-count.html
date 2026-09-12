@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>جرد الصندوق | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+  <style>
+    @media print {
+      #sidebar-container, #header-container, .page-header, .report-tabs, #new-count-card, #back-to-list-link { display: none !important; }
+      .page-content { padding: 0 !important; }
+    }
+    /* نفس بطاقة ملخّص القيد اليومي في journal-entry-form.html — غير موجودة في components.css العامة */
+    .batch-summary-box {
+      display:grid; grid-template-columns: repeat(3, 1fr); gap: var(--spacing-3);
+      background: var(--color-bg); border-radius: var(--radius-sm); padding: var(--spacing-3);
+      margin-bottom: var(--spacing-4);
+    }
+    .batch-summary-item { text-align:center; }
+    .batch-summary-item__label { font-size:12px; color: var(--color-text-secondary); font-weight:700; margin-bottom:4px; }
+    .batch-summary-item__value { font-size:16px; font-weight:800; }
+    @media (max-width: 900px) {
+      .batch-summary-box { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2>جرد الصندوق ومحضر فرق الصندوق</h2>
+        </div>
+
+        
+
+        <div class="card" id="new-count-card" style="margin-bottom: var(--spacing-4);">
+          <div class="card__header"><h3>جرد جديد</h3></div>
+          <form id="cash-count-form" class="form-grid" novalidate>
+            <div class="form-group">
+              <label for="accountCode">الحساب <span class="required">*</span></label>
+              <select id="accountCode" class="form-control">
+                <option value="11101">الصندوق الرئيسي</option>
+                <option value="11102">بنك الرياض حـ/</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="date">تاريخ الجرد <span class="required">*</span></label>
+              <input type="date" id="date" class="form-control" />
+              <span class="form-error">التاريخ مطلوب</span>
+            </div>
+            <div class="form-group">
+              <label for="countedAmount">المبلغ المعدود فعليًا <span class="required">*</span></label>
+              <input type="number" id="countedAmount" class="form-control" min="0" step="0.01" />
+              <span class="form-error">أدخل مبلغًا صحيحًا</span>
+            </div>
+            <div class="form-group form-group--full">
+              <label for="notes">ملاحظات</label>
+              <input type="text" id="notes" class="form-control" />
+            </div>
+
+            <div class="form-group form-group--full">
+              <div class="batch-summary-box">
+                <div class="batch-summary-item">
+                  <div class="batch-summary-item__label">رصيد النظام كما في هذا التاريخ</div>
+                  <div class="batch-summary-item__value" id="preview-system">-</div>
+                </div>
+                <div class="batch-summary-item">
+                  <div class="batch-summary-item__label">المبلغ المعدود</div>
+                  <div class="batch-summary-item__value" id="preview-counted">-</div>
+                </div>
+                <div class="batch-summary-item">
+                  <div class="batch-summary-item__label">الفرق</div>
+                  <div class="batch-summary-item__value" id="preview-difference">-</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn--success" id="save-count-btn">حفظ الجرد</button>
+            </div>
+          </form>
+        </div>
+
+        <div id="memo-view" style="display:none;"></div>
+
+        <div id="list-view">
+          <a href="cash-count.html" class="btn btn--outline" id="back-to-list-link" style="display:none; margin-bottom: var(--spacing-3);">→ العودة للسجل</a>
+          <div class="card__header" style="padding: 0 4px;"><h3>سجل الجرد</h3></div>
+          <div id="cash-counts-table"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="modal-root"></div>
+
+  <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/services/adjustment-service.js"></script>
+  <script src="../js/services/cash-count-service.js"></script>
+  <script src="../js/services/period-service.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/quick-action-fab.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/components/data-table.js"></script>
+  <script src="../js/pages/cash-count-page.js"></script>
+</body>
+</html>

@@ -3,6 +3,8 @@
 let _reportAnimals = [];
 let _reportBirths = [];
 let _reportDeaths = [];
+let _reportMatings = [];
+let _reportPregnancies = [];
 let _activeTab = 'stats';
 
 const _tabTitles = {
@@ -12,19 +14,38 @@ const _tabTitles = {
   deaths: 'النفوق خلال فترة',
   byType: 'حسب النوع',
   byBreed: 'حسب السلالة',
+  mating: 'التلقيح خلال فترة',
+  pregnancy: 'الحمل خلال فترة',
 };
 
 let _currentExportColumns = null;
 let _currentExportRows = null;
+
+// بطاقة "N ذكور / N إناث" داخل قيمة واحدة — خط صغير (15px) بدون بولد (400)، بدل حجم/وزن
+// رقم KPI الكبير المعتاد (22px/800)، ونفس حجم عنوان البطاقة عبر _genderSplitLabel
+function _genderSplitValue(males, females) {
+  return `<span style="font-size:15px; font-weight:400;">${formatNumber(males)} ذكور / ${formatNumber(females)} إناث</span>`;
+}
+
+// عنوان بطاقات "توزيع ... حسب الجنس" — خط صغير (15px) بدون بولد (400)، بدل خط عنوان بطاقة KPI
+// الصغير المعتاد، تمييزًا لهذه البطاقات الأربع وبنفس حجم/وزن _genderSplitValue
+function _genderSplitLabel(text) {
+  return `<span style="font-size:15px; font-weight:400;">${text}</span>`;
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth('reports');
   renderSidebar('reports');
   renderHeader('تقارير القطيع');
 
-  [_reportAnimals, _reportBirths, _reportDeaths] = await Promise.all([
-    getAllAnimals(), getAllBirths(), getAllDeaths(),
+  [_reportAnimals, _reportBirths, _reportDeaths, _reportMatings, _reportPregnancies] = await Promise.all([
+    getAllAnimals(), getAllBirths(), getAllDeaths(), getAllMatings(), getAllPregnancies(),
   ]);
+
+  const animalFilterSelect = document.getElementById('report-animal-filter');
+  const females = _reportAnimals.filter(a => a.gender === 'female').sort((a, b) => (a.code || '').localeCompare(b.code || ''));
+  animalFilterSelect.insertAdjacentHTML('beforeend', females.map(a => `<option value="${a.id}">${a.code}</option>`).join(''));
+  animalFilterSelect.addEventListener('change', _renderActiveTab);
 
   document.querySelectorAll('.report-tab[data-tab]').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -60,7 +81,12 @@ function _dateInRange(dateStr, from, to) {
 function _renderActiveTab() {
   const from = document.getElementById('report-from').value;
   const to = document.getElementById('report-to').value;
+  const animalId = document.getElementById('report-animal-filter').value;
   const container = document.getElementById('report-content');
+
+  const showAnimalFilter = _activeTab === 'mating' || _activeTab === 'pregnancy';
+  document.getElementById('report-animal-label').style.display = showAnimalFilter ? '' : 'none';
+  document.getElementById('report-animal-filter').style.display = showAnimalFilter ? '' : 'none';
 
   if (_activeTab === 'stats') return _renderStatsTab(container);
   if (_activeTab === 'births') return _renderBirthsTab(container, from, to);
@@ -68,6 +94,8 @@ function _renderActiveTab() {
   if (_activeTab === 'deaths') return _renderDeathsTab(container, from, to);
   if (_activeTab === 'byType') return _renderByTypeTab(container);
   if (_activeTab === 'byBreed') return _renderByBreedTab(container);
+  if (_activeTab === 'mating') return _renderMatingTab(container, from, to, animalId);
+  if (_activeTab === 'pregnancy') return _renderPregnancyTab(container, from, to, animalId);
 }
 
 function _renderStatsTab(container) {
@@ -76,10 +104,14 @@ function _renderStatsTab(container) {
 
   const herdListBase = '../herd/herd-list.html';
   const alive = _reportAnimals.filter(a => a.status === 'alive');
-  const sheep = alive.filter(a => a.type === 'sheep').length;
-  const goats = alive.filter(a => a.type === 'goat').length;
-  const males = alive.filter(a => a.gender === 'male').length;
-  const females = alive.filter(a => a.gender === 'female').length;
+  const sheepAlive = alive.filter(a => a.type === 'sheep');
+  const goatsAlive = alive.filter(a => a.type === 'goat');
+  const sheep = sheepAlive.length;
+  const goats = goatsAlive.length;
+  const sheepMales = sheepAlive.filter(a => a.gender === 'male').length;
+  const sheepFemales = sheepAlive.filter(a => a.gender === 'female').length;
+  const goatMales = goatsAlive.filter(a => a.gender === 'male').length;
+  const goatFemales = goatsAlive.filter(a => a.gender === 'female').length;
   const sick = alive.filter(a => a.healthStatus === 'sick').length;
   const underTreatment = alive.filter(a => a.healthStatus === 'underTreatment').length;
 
@@ -87,9 +119,9 @@ function _renderStatsTab(container) {
     ${kpiGrid([
       { value: formatNumber(alive.length), label: 'إجمالي القطيع الحي', tone: 'blue', icon: '🐑', href: buildQueryUrl(herdListBase, { status: 'alive' }) },
       { value: formatNumber(sheep), label: 'عدد الأغنام', tone: 'green', href: buildQueryUrl(herdListBase, { type: 'sheep', status: 'alive' }) },
+      { value: _genderSplitValue(sheepMales, sheepFemales), label: _genderSplitLabel('توزيع الأغنام حسب الجنس'), tone: 'green' },
       { value: formatNumber(goats), label: 'عدد الماعز', tone: 'blue', href: buildQueryUrl(herdListBase, { type: 'goat', status: 'alive' }) },
-      { value: formatNumber(males), label: 'ذكور', tone: 'green', href: buildQueryUrl(herdListBase, { gender: 'male', status: 'alive' }) },
-      { value: formatNumber(females), label: 'إناث', tone: 'blue', href: buildQueryUrl(herdListBase, { gender: 'female', status: 'alive' }) },
+      { value: _genderSplitValue(goatMales, goatFemales), label: _genderSplitLabel('توزيع الماعز حسب الجنس'), tone: 'blue' },
       { value: formatNumber(sick), label: 'مريض', tone: 'red', icon: '⚕️', href: buildQueryUrl(herdListBase, { status: 'sick' }) },
       { value: formatNumber(underTreatment), label: 'تحت العلاج', tone: 'red', href: buildQueryUrl(herdListBase, { status: 'underTreatment' }) },
     ])}
@@ -101,6 +133,17 @@ function _renderStatsTab(container) {
 function _renderBirthsTab(container, from, to) {
   const filtered = _reportBirths.filter(b => _dateInRange(b.birthDate, from, to));
   const totalOffspring = filtered.reduce((s, b) => s + Number(b.offspringCount || 0), 0);
+
+  // نوع كل مولود (غنم/ماعز) غير مخزَّن على تفاصيل المولود نفسه — نستنتجه من نوع الأم
+  // (نفس افتراض `motherTypeFields` عند تكويد المولود تلقائيًا في births-page.js)
+  let sheepMales = 0, sheepFemales = 0, goatMales = 0, goatFemales = 0;
+  filtered.forEach(b => {
+    const motherType = (_reportAnimals.find(a => a.id === b.motherId) || {}).type;
+    (b.offspringDetails || []).forEach(o => {
+      if (motherType === 'sheep') { if (o.gender === 'male') sheepMales++; else if (o.gender === 'female') sheepFemales++; }
+      else if (motherType === 'goat') { if (o.gender === 'male') goatMales++; else if (o.gender === 'female') goatFemales++; }
+    });
+  });
 
   const rows = filtered.map(b => ({
     dateLabel: formatDateArabic(b.birthDate),
@@ -114,7 +157,11 @@ function _renderBirthsTab(container, from, to) {
     ${kpiGrid([
       { value: formatNumber(filtered.length), label: 'عدد سجلات الولادة', tone: 'green' },
       { value: formatNumber(totalOffspring), label: 'إجمالي عدد المواليد', tone: 'green' },
-    ], 2)}
+      { value: formatNumber(sheepMales + sheepFemales), label: 'مواليد الأغنام', tone: 'green' },
+      { value: _genderSplitValue(sheepMales, sheepFemales), label: _genderSplitLabel('توزيع مواليد الأغنام حسب الجنس'), tone: 'green' },
+      { value: formatNumber(goatMales + goatFemales), label: 'مواليد الماعز', tone: 'blue' },
+      { value: _genderSplitValue(goatMales, goatFemales), label: _genderSplitLabel('توزيع مواليد الماعز حسب الجنس'), tone: 'blue' },
+    ])}
     <div id="births-report-table"></div>
   `;
   const columns = [
@@ -296,5 +343,118 @@ function _renderByBreedTab(container) {
     emptyMessage: 'لا توجد بيانات سلالات كافية بعد',
     footerRow,
     onRowClick: (row) => { window.location.href = `../herd/herd-list.html?breed=${encodeURIComponent(row.breed)}&status=alive`; },
+  });
+}
+
+function _renderMatingTab(container, from, to, animalId) {
+  let filtered = _reportMatings.filter(m => _dateInRange(m.date, from, to));
+  if (animalId) filtered = filtered.filter(m => m.animalId === Number(animalId));
+
+  const naturalCount = filtered.filter(m => m.method === 'natural').length;
+  const aiCount = filtered.filter(m => m.method === 'ai').length;
+
+  const rows = filtered
+    .slice()
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+    .map(m => ({
+      dateLabel: formatDateArabic(m.date),
+      animalCode: (_reportAnimals.find(a => a.id === m.animalId) || {}).code || '-',
+      methodLabel: MATING_METHOD_LABELS[m.method] || m.method || '-',
+      maleInfo: m.maleInfo || '-',
+      notes: m.notes || '-',
+      animalId: m.animalId,
+    }));
+
+  container.innerHTML = `
+    ${kpiGrid([
+      { value: formatNumber(filtered.length), label: 'عدد سجلات التلقيح', tone: 'blue' },
+      { value: formatNumber(naturalCount), label: 'تلقيح طبيعي', tone: 'green' },
+      { value: formatNumber(aiCount), label: 'تلقيح اصطناعي', tone: 'blue' },
+    ], 3)}
+    <div id="mating-report-table"></div>
+  `;
+
+  const columns = [
+    { key: 'dateLabel', label: 'تاريخ التلقيح', sortable: true },
+    { key: 'animalCode', label: 'كود الأنثى', sortable: false },
+    { key: 'methodLabel', label: 'نوع التلقيح', sortable: false },
+    { key: 'maleInfo', label: 'الفحل / المصدر', sortable: false },
+    { key: 'notes', label: 'ملاحظات', sortable: false },
+  ];
+
+  const footerRow = rows.length ? {
+    dateLabel: 'الإجمالي',
+    animalCode: `${formatNumber(filtered.length)} سجل`,
+    methodLabel: '',
+    maleInfo: '',
+    notes: '',
+  } : null;
+
+  _currentExportColumns = columns;
+  _currentExportRows = footerRow ? [...rows, footerRow] : rows;
+
+  renderDataTable('mating-report-table', columns, rows, {
+    emptyMessage: 'لا توجد سجلات تلقيح خلال هذه الفترة',
+    footerRow,
+    onRowClick: (row) => { if (row.animalId) window.location.href = `../herd/mating.html?animalId=${row.animalId}`; },
+  });
+}
+
+function _renderPregnancyTab(container, from, to, animalId) {
+  let filtered = _reportPregnancies.filter(p => _dateInRange(p.confirmedDate, from, to));
+  if (animalId) filtered = filtered.filter(p => p.animalId === Number(animalId));
+
+  const pregnantCount = filtered.filter(p => p.status === 'pregnant').length;
+  const deliveredCount = filtered.filter(p => p.status === 'delivered').length;
+  const lostCount = filtered.filter(p => p.status === 'lost').length;
+
+  const rows = filtered
+    .slice()
+    .sort((a, b) => (b.confirmedDate || '').localeCompare(a.confirmedDate || ''))
+    .map(p => ({
+      confirmedDateLabel: formatDateArabic(p.confirmedDate),
+      animalCode: (_reportAnimals.find(a => a.id === p.animalId) || {}).code || '-',
+      expectedBirthDateLabel: p.expectedBirthDate ? formatDateArabic(p.expectedBirthDate) : '-',
+      statusLabel: PREGNANCY_STATUS_LABELS[p.status] || p.status || '-',
+      actualBirthDateLabel: p.actualBirthDate ? formatDateArabic(p.actualBirthDate) : '-',
+      notes: p.notes || '-',
+      animalId: p.animalId,
+    }));
+
+  container.innerHTML = `
+    ${kpiGrid([
+      { value: formatNumber(filtered.length), label: 'عدد سجلات الحمل', tone: 'blue' },
+      { value: formatNumber(pregnantCount), label: 'حالات حمل قائمة', tone: 'green' },
+      { value: formatNumber(deliveredCount), label: 'وضعت', tone: 'blue' },
+      { value: formatNumber(lostCount), label: 'فقدان حمل', tone: 'red' },
+    ], 4)}
+    <div id="pregnancy-report-table"></div>
+  `;
+
+  const columns = [
+    { key: 'confirmedDateLabel', label: 'تاريخ تأكيد الحمل', sortable: true },
+    { key: 'animalCode', label: 'كود الأنثى', sortable: false },
+    { key: 'expectedBirthDateLabel', label: 'تاريخ الولادة المتوقع', sortable: false },
+    { key: 'statusLabel', label: 'الحالة', sortable: true },
+    { key: 'actualBirthDateLabel', label: 'تاريخ الولادة الفعلي', sortable: false },
+    { key: 'notes', label: 'ملاحظات', sortable: false },
+  ];
+
+  const footerRow = rows.length ? {
+    confirmedDateLabel: 'الإجمالي',
+    animalCode: `${formatNumber(filtered.length)} سجل`,
+    expectedBirthDateLabel: '',
+    statusLabel: '',
+    actualBirthDateLabel: '',
+    notes: '',
+  } : null;
+
+  _currentExportColumns = columns;
+  _currentExportRows = footerRow ? [...rows, footerRow] : rows;
+
+  renderDataTable('pregnancy-report-table', columns, rows, {
+    emptyMessage: 'لا توجد سجلات حمل خلال هذه الفترة',
+    footerRow,
+    onRowClick: (row) => { if (row.animalId) window.location.href = `../herd/pregnancy.html?animalId=${row.animalId}`; },
   });
 }

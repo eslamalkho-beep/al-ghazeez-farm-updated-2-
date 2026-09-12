@@ -1,65 +1,162 @@
 // js/services/bulk-batch-service.js
-// دفعات الشراء والبيع الجماعي — سجل واحد يحوي بنود شراء (يوم واحد) وبنود بيع/مصاريف (كل بند بتاريخه الخاص)
+// الشراء والبيع الجماعي: عمليتا شراء/بيع مستقلتان تمامًا (كل عملية سجل خاص بها، وقيد محاسبي خاص بها) —
+// الشراء يُرسمَل كأصل "مخزون الشراء والبيع الجماعي" (1035) بدل تحميله كمصروف فوري، والبيع يُثبت الإيراد
+// **و**تكلفة البضاعة المباعة (COGS) معًا، بناءً على متوسط تكلفة متحرك محسوب من كل عمليات الشراء لنفس
+// التركيبة (نوع/جنس/سلالة) — بذلك لا يظهر الربح الحقيقي إلا عند البيع الفعلي. هذا يحل محل نموذج "الدفعات"
+// القديم (BulkBatches، ما زال اسمه في OBJECT_STORES كأرشيف صامت فقط) الذي كان يحمّل تكلفة الشراء كمصروف
+// فوري بصرف النظر عن حصول بيع فعلي أم لا.
 
-async function getAllBulkBatches() {
-  const all = await dbGetAll('BulkBatches');
-  return all.filter(b => b.status !== 'deleted');
+// ===== الشراء =====
+
+async function getAllBulkPurchases() {
+  const all = await dbGetAll('BulkPurchaseBatches');
+  return all.filter(p => p.status !== 'deleted');
 }
 
-async function getBulkBatchById(id) {
-  return dbGet('BulkBatches', id);
+async function getBulkPurchaseById(id) {
+  return dbGet('BulkPurchaseBatches', id);
 }
 
-async function createBulkBatch(data) {
-  return dbAdd('BulkBatches', data);
+async function createBulkPurchase(data) {
+  return dbAdd('BulkPurchaseBatches', data);
 }
 
-async function updateBulkBatch(id, data) {
-  return dbUpdate('BulkBatches', id, data);
+async function updateBulkPurchase(id, data) {
+  return dbUpdate('BulkPurchaseBatches', id, data);
 }
 
-async function deleteBulkBatch(id) {
-  return dbSoftDelete('BulkBatches', id);
+async function deleteBulkPurchase(id) {
+  return dbSoftDelete('BulkPurchaseBatches', id);
 }
 
-async function generateNextBulkBatchCode() {
-  const all = await getAllBulkBatches();
+async function generateNextBulkPurchaseCode() {
+  const all = await getAllBulkPurchases();
   const numbers = all
-    .map(b => (b.code && b.code.startsWith('DF-')) ? parseInt(b.code.replace('DF-', ''), 10) : 0)
+    .map(p => (p.code && p.code.startsWith('DFP-')) ? parseInt(p.code.replace('DFP-', ''), 10) : 0)
     .filter(n => !isNaN(n));
   const next = (numbers.length ? Math.max(...numbers) : 0) + 1;
-  return `DF-${String(next).padStart(4, '0')}`;
+  return `DFP-${String(next).padStart(4, '0')}`;
 }
 
-// يحسب مجاميع دفعة واحدة من بنودها — لا شيء من هذا مخزَّن، يُحسب دائمًا حيًا
-function computeBulkBatchTotals(batch) {
-  const purchaseLines = batch.purchaseLines || [];
-  const saleLines = batch.saleLines || [];
-  const expenseLines = batch.expenseLines || [];
+// ===== البيع =====
 
-  const totalPurchaseCount = purchaseLines.reduce((s, l) => s + Number(l.count || 0), 0);
-  const totalPurchaseCost = purchaseLines.reduce((s, l) => s + Number(l.count || 0) * Number(l.unitPrice || 0), 0);
-  const totalSaleCount = saleLines.reduce((s, l) => s + Number(l.count || 0), 0);
-  const totalSaleRevenue = saleLines.reduce((s, l) => s + Number(l.count || 0) * Number(l.unitPrice || 0), 0);
-  const totalExpenses = expenseLines.reduce((s, l) => s + Number(l.amount || 0), 0);
-  const netRevenue = totalSaleRevenue - totalPurchaseCost - totalExpenses;
-  const remainingCount = totalPurchaseCount - totalSaleCount;
+async function getAllBulkSales() {
+  const all = await dbGetAll('BulkSaleBatches');
+  return all.filter(s => s.status !== 'deleted');
+}
 
-  return { totalPurchaseCount, totalPurchaseCost, totalSaleCount, totalSaleRevenue, totalExpenses, netRevenue, remainingCount };
+async function getBulkSaleById(id) {
+  return dbGet('BulkSaleBatches', id);
+}
+
+async function createBulkSale(data) {
+  return dbAdd('BulkSaleBatches', data);
+}
+
+async function updateBulkSale(id, data) {
+  return dbUpdate('BulkSaleBatches', id, data);
+}
+
+async function deleteBulkSale(id) {
+  return dbSoftDelete('BulkSaleBatches', id);
+}
+
+async function generateNextBulkSaleCode() {
+  const all = await getAllBulkSales();
+  const numbers = all
+    .map(s => (s.code && s.code.startsWith('DFS-')) ? parseInt(s.code.replace('DFS-', ''), 10) : 0)
+    .filter(n => !isNaN(n));
+  const next = (numbers.length ? Math.max(...numbers) : 0) + 1;
+  return `DFS-${String(next).padStart(4, '0')}`;
+}
+
+// ===== الأرصدة ومتوسط التكلفة (محسوبة حيًا دومًا) =====
+
+function _bulkGroupKey(line) {
+  return `${line.type}|${line.gender}|${(line.breed || '').trim().toLowerCase()}`;
+}
+
+// يجمّع كل عمليات الشراء/البيع حسب تركيبة نوع/جنس/سلالة، ويحسب متوسط تكلفة متحرك (إجمالي تكلفة الشراء ÷
+// إجمالي عدد الشراء لنفس التركيبة — من الشراء فقط، لا تؤثر عمليات البيع على المتوسط إطلاقًا) والرصيد الحالي
+// وإجمالي الربح. بنفس مبدأ computeAccountBalance(account, allEntries, asOfDate) في accounting-service.js:
+// مرّر asOfDate لحساب الأرصدة "كما في تاريخ" سابق بدل الرصيد الحالي (مستخدم لتجميد متوسط التكلفة وقت حفظ
+// عملية بيع بتاريخ معيّن، ولعرض معاينة حيّة أثناء تعبئة النموذج)
+function computeBulkGroupBalances(purchases, sales, asOfDate = null) {
+  const groups = {};
+  const ensureGroup = (line) => {
+    const key = _bulkGroupKey(line);
+    if (!groups[key]) {
+      groups[key] = {
+        type: line.type, gender: line.gender, breed: line.breed,
+        purchasedCount: 0, purchasedCost: 0, soldCount: 0, soldRevenue: 0, cogs: 0,
+      };
+    }
+    return groups[key];
+  };
+
+  (purchases || []).forEach(p => {
+    if (asOfDate && p.date > asOfDate) return;
+    (p.lines || []).forEach(line => {
+      const g = ensureGroup(line);
+      g.purchasedCount += Number(line.count || 0);
+      g.purchasedCost += Number(line.count || 0) * Number(line.unitPrice || 0);
+    });
+  });
+
+  (sales || []).forEach(s => {
+    if (asOfDate && s.date > asOfDate) return;
+    (s.lines || []).forEach(line => {
+      const g = ensureGroup(line);
+      g.soldCount += Number(line.count || 0);
+      g.soldRevenue += Number(line.count || 0) * Number(line.unitPrice || 0);
+      g.cogs += Number(line.cogsAmount || 0);
+    });
+  });
+
+  return Object.values(groups).map(g => ({
+    ...g,
+    avgCost: g.purchasedCount > 0 ? g.purchasedCost / g.purchasedCount : 0,
+    remainingCount: g.purchasedCount - g.soldCount,
+    grossProfit: g.soldRevenue - g.cogs,
+  }));
+}
+
+// غلاف مبسّط فوق computeBulkGroupBalances لعرض متوسط التكلفة/الكمية المتاحة حيًا أثناء إدخال بند بيع
+// (asOfDate يُقصَد به هنا "كما في" تاريخ عملية البيع نفسها، حتى لا تدخل عمليات شراء لاحقة في حساب متوسط
+// عملية بيع أقدم منها تاريخيًا)
+function getGroupAverageCost(type, gender, breed, purchases, asOfDate = null) {
+  const key = `${type}|${gender}|${(breed || '').trim().toLowerCase()}`;
+  const groups = computeBulkGroupBalances(purchases, [], asOfDate);
+  const match = groups.find(g => _bulkGroupKey(g) === key);
+  return match ? { avgCost: match.avgCost, availableCount: match.purchasedCount - match.soldCount } : { avgCost: 0, availableCount: 0 };
+}
+
+// يحسب avgCostAtSale/cogsAmount لكل بند بيع بناءً على متوسط تكلفة الشراء لنفس التركيبة "كما في" تاريخ
+// العملية — تُستدعى وقت حفظ عملية بيع (جديدة أو مُعدَّلة) لتجميد القيمة وقتها (snapshot). لا تُعاد حسابها
+// تلقائيًا لاحقًا حتى لو عُدِّلت بيانات شراء قديمة بعد ذلك — نفس فلسفة عدم إعادة الحساب بأثر رجعي المتّبعة
+// في باقي أتمتة المحاسبة بالمشروع (مثل تعديل مصروف مرتبط بتسوية عهدة)
+function computeSaleLinesCosts(rawLines, allPurchases, asOfDate) {
+  return rawLines.map(line => {
+    const { avgCost } = getGroupAverageCost(line.type, line.gender, line.breed, allPurchases, asOfDate);
+    const cogsAmount = Number(line.count || 0) * avgCost;
+    return { ...line, avgCostAtSale: avgCost, cogsAmount };
+  });
 }
 
 // ===== ترحيل تلقائي للمحاسبة =====
-// قيد واحد "مُعاد الصياغة" لكل دفعة (نفس مبدأ syncExpenseJournalEntry) يعكس أثر بنود الشراء/البيع/المصاريف
-// كلها معًا. تبسيطان معروفان مقصودان: (1) القيد بأكمله يُؤرَّخ بـ purchaseDate الدفعة، وليس بتواريخ بنود
-// البيع/المصاريف الفعلية المتفرقة لاحقًا — الدفعة تُعامَل كحدث محاسبي واحد. (2) لا يوجد حقل طريقة دفع على
-// مستوى الدفعة فيُفترض دومًا حساب "الصندوق" (1000) لكل الأطراف النقدية.
-const BULK_CASH_ACCOUNT_CODE = '1000';
-const BULK_PURCHASE_EXPENSE_ACCOUNT_CODE = '5060';
-const BULK_SALE_REVENUE_ACCOUNT_CODE = '4010';
-const BULK_MISC_EXPENSE_ACCOUNT_CODE = '5070';
+// كل بند جملة (نوع/جنس/سلالة) يُرحَّل على حساب الورقة المناسب له في الشجرة الهرمية بدل حساب واحد عام —
+// بند الجملة لا يحمل تصنيف عمر (أمهات/حملان)، فتقريب مقصود موثّق: إناث الأغنام على "أمهات أغنام" وذكورها
+// على "كباش أغنام" (والعكس للماعز)، وتكلفة البضاعة المباعة على حساب النوع كاملًا. الحسابات قابلة للتغيير
+// من شاشة "ربط العمليات بالحسابات" (مفاتيح مجموعة bulk)
+const _BULK_LINE_MAPPING_KEYS = {
+  'sheep|male': { inventoryKey: 'bulkInventorySheepMale', revenueKey: 'bulkRevenueSheepMale', cogsKey: 'bulkCogsSheep' },
+  'sheep|female': { inventoryKey: 'bulkInventorySheepFemale', revenueKey: 'bulkRevenueSheepFemale', cogsKey: 'bulkCogsSheep' },
+  'goat|male': { inventoryKey: 'bulkInventoryGoatMale', revenueKey: 'bulkRevenueGoatMale', cogsKey: 'bulkCogsGoat' },
+  'goat|female': { inventoryKey: 'bulkInventoryGoatFemale', revenueKey: 'bulkRevenueGoatFemale', cogsKey: 'bulkCogsGoat' },
+};
 
-// يُصافي مجموعة أزواج مدين/دائن إلى سطر واحد بحد أقصى لكل حساب (بدل تكرار "الصندوق" في أكثر من سطر لنفس القيد)،
-// مع الحفاظ رياضيًا على توازن إجمالي المدين = إجمالي الدائن للقيد ككل
+// يُصافي مجموعة أزواج مدين/دائن إلى سطر واحد بحد أقصى لكل حساب (بدل تكرار نفس الحساب في أكثر من سطر لنفس
+// القيد)، مع الحفاظ رياضيًا على توازن إجمالي المدين = إجمالي الدائن للقيد ككل
 function _netJournalLinesByAccount(pairs) {
   const totals = {};
   pairs.forEach(({ accountId, debit, credit }) => {
@@ -78,58 +175,120 @@ function _netJournalLinesByAccount(pairs) {
     .filter(Boolean);
 }
 
-async function syncBulkBatchJournalEntry(batchId) {
-  const batch = await getBulkBatchById(batchId);
-  if (!batch) return null;
+// source: 'transfer' (عملية أُنشئت من transfer-service.js لنقل حيوان بين القطيع ومخزون التجارة) تُستثنى
+// بالكامل من الترحيل المحاسبي — لا قيد إطلاقًا — لأنها تحويل داخلي بحت بلا أي حركة نقدية حقيقية، رغم أن
+// سعر وحدتها (القيمة التقديرية إن أُدخلت) يدخل بشكل طبيعي في حساب متوسط التكلفة عبر computeBulkGroupBalances
+async function syncBulkPurchaseJournalEntry(purchaseId) {
+  const purchase = await getBulkPurchaseById(purchaseId);
+  if (!purchase) return null;
+  if (purchase.source === 'transfer') return null;
 
-  const totals = computeBulkBatchTotals(batch);
-  const accounts = await getAllAccounts();
-  const cashAccount = getAccountByCode(BULK_CASH_ACCOUNT_CODE, accounts);
-  const purchaseExpenseAccount = getAccountByCode(BULK_PURCHASE_EXPENSE_ACCOUNT_CODE, accounts);
-  const saleRevenueAccount = getAccountByCode(BULK_SALE_REVENUE_ACCOUNT_CODE, accounts);
-  const miscExpenseAccount = getAccountByCode(BULK_MISC_EXPENSE_ACCOUNT_CODE, accounts);
-  if (!cashAccount || !purchaseExpenseAccount || !saleRevenueAccount || !miscExpenseAccount) return null; // دفاعي
+  const totalCost = (purchase.lines || []).reduce((s, l) => s + Number(l.count || 0) * Number(l.unitPrice || 0), 0);
+  const [accounts, mappings] = await Promise.all([getAllAccounts(), loadAccountMappings()]);
+  const cashAccount = getMappedAccount('cash', accounts, mappings);
+  if (!cashAccount) return null; // دفاعي
 
+  // مدين مخزون كل بند على ورقة نوعه/جنسه (بدل حساب مخزون جملة واحد) — دائن الصندوق بالإجمالي
   const pairs = [];
-  if (totals.totalPurchaseCost > 0) {
-    pairs.push({ accountId: purchaseExpenseAccount.id, debit: totals.totalPurchaseCost, credit: 0 });
-    pairs.push({ accountId: cashAccount.id, debit: 0, credit: totals.totalPurchaseCost });
-  }
-  if (totals.totalSaleRevenue > 0) {
-    pairs.push({ accountId: cashAccount.id, debit: totals.totalSaleRevenue, credit: 0 });
-    pairs.push({ accountId: saleRevenueAccount.id, debit: 0, credit: totals.totalSaleRevenue });
-  }
-  if (totals.totalExpenses > 0) {
-    pairs.push({ accountId: miscExpenseAccount.id, debit: totals.totalExpenses, credit: 0 });
-    pairs.push({ accountId: cashAccount.id, debit: 0, credit: totals.totalExpenses });
-  }
+  (purchase.lines || []).forEach(line => {
+    const lineCost = Number(line.count || 0) * Number(line.unitPrice || 0);
+    if (!(lineCost > 0)) return;
+    const keys = _BULK_LINE_MAPPING_KEYS[`${line.type}|${line.gender}`];
+    const inventoryAccount = keys && getMappedAccount(keys.inventoryKey, accounts, mappings);
+    if (!inventoryAccount) return;
+    pairs.push({ accountId: inventoryAccount.id, debit: lineCost, credit: 0 });
+  });
+  if (totalCost > 0) pairs.push({ accountId: cashAccount.id, debit: 0, credit: totalCost });
+
   const lines = _netJournalLinesByAccount(pairs);
 
   if (!lines.length) {
-    if (batch.journalEntryId) {
-      await deleteJournalEntry(batch.journalEntryId);
-      await dbUpdate('BulkBatches', batchId, { journalEntryId: null });
+    if (purchase.journalEntryId) {
+      await deleteJournalEntry(purchase.journalEntryId);
+      await dbUpdate('BulkPurchaseBatches', purchaseId, { journalEntryId: null });
     }
     return null;
   }
 
-  const description = `دفعة شراء وبيع جماعي ${batch.code} بتاريخ ${batch.purchaseDate}`;
-  const existingEntry = batch.journalEntryId ? await getJournalEntryById(batch.journalEntryId) : null;
+  const description = `شراء جملة ${purchase.code} بتاريخ ${purchase.date}`;
+  const existingEntry = purchase.journalEntryId ? await getJournalEntryById(purchase.journalEntryId) : null;
   if (existingEntry && existingEntry.status !== 'deleted') {
-    await updateJournalEntry(existingEntry.id, { date: batch.purchaseDate, description, lines });
+    await updateJournalEntry(existingEntry.id, { date: purchase.date, description, lines });
     return existingEntry.id;
   }
 
   const entryNumber = await generateNextEntryNumber();
-  const newEntryId = await createJournalEntry({ entryNumber, date: batch.purchaseDate, description, lines });
-  await dbUpdate('BulkBatches', batchId, { journalEntryId: newEntryId });
+  const newEntryId = await createJournalEntry({ entryNumber, date: purchase.date, description, lines });
+  await dbUpdate('BulkPurchaseBatches', purchaseId, { journalEntryId: newEntryId });
   return newEntryId;
 }
 
-// يحذف القيد اليومية المرتبط بدفعة (يُستدعى قبل حذف الدفعة نفسها)
-async function reverseBulkBatchJournalEntry(batchId) {
-  const batch = await getBulkBatchById(batchId);
-  if (batch && batch.journalEntryId) {
-    await deleteJournalEntry(batch.journalEntryId);
+async function reverseBulkPurchaseJournalEntry(purchaseId) {
+  const purchase = await getBulkPurchaseById(purchaseId);
+  if (purchase && purchase.journalEntryId) {
+    await deleteJournalEntry(purchase.journalEntryId);
+  }
+}
+
+async function syncBulkSaleJournalEntry(saleId) {
+  const sale = await getBulkSaleById(saleId);
+  if (!sale) return null;
+  if (sale.source === 'transfer') return null;
+
+  const totalRevenue = (sale.lines || []).reduce((s, l) => s + Number(l.count || 0) * Number(l.unitPrice || 0), 0);
+  const totalCogs = (sale.lines || []).reduce((s, l) => s + Number(l.cogsAmount || 0), 0);
+
+  const [accounts, mappings] = await Promise.all([getAllAccounts(), loadAccountMappings()]);
+  const cashAccount = getMappedAccount('cash', accounts, mappings);
+  if (!cashAccount) return null; // دفاعي
+
+  // قيد مركّب: دائن الإيراد لكل بند على ورقة مبيعات نوعه/جنسه، مدين تكلفة البضاعة المباعة لكل بند على
+  // ورقة تكلفة نوعه، دائن مخزون كل بند بنفس التكلفة — ثم صافي الأسطر لكل حساب عبر _netJournalLinesByAccount
+  const pairs = [];
+  if (totalRevenue > 0) pairs.push({ accountId: cashAccount.id, debit: totalRevenue, credit: 0 });
+  (sale.lines || []).forEach(line => {
+    const lineRevenue = Number(line.count || 0) * Number(line.unitPrice || 0);
+    const lineCogs = Number(line.cogsAmount || 0);
+    const keys = _BULK_LINE_MAPPING_KEYS[`${line.type}|${line.gender}`];
+    if (!keys) return;
+
+    if (lineRevenue > 0) {
+      const revenueAccount = getMappedAccount(keys.revenueKey, accounts, mappings);
+      if (revenueAccount) pairs.push({ accountId: revenueAccount.id, debit: 0, credit: lineRevenue });
+    }
+    if (lineCogs > 0) {
+      const cogsAccount = getMappedAccount(keys.cogsKey, accounts, mappings);
+      const inventoryAccount = getMappedAccount(keys.inventoryKey, accounts, mappings);
+      if (cogsAccount) pairs.push({ accountId: cogsAccount.id, debit: lineCogs, credit: 0 });
+      if (inventoryAccount) pairs.push({ accountId: inventoryAccount.id, debit: 0, credit: lineCogs });
+    }
+  });
+  const lines = _netJournalLinesByAccount(pairs);
+
+  if (!lines.length) {
+    if (sale.journalEntryId) {
+      await deleteJournalEntry(sale.journalEntryId);
+      await dbUpdate('BulkSaleBatches', saleId, { journalEntryId: null });
+    }
+    return null;
+  }
+
+  const description = `بيع جملة ${sale.code} بتاريخ ${sale.date}`;
+  const existingEntry = sale.journalEntryId ? await getJournalEntryById(sale.journalEntryId) : null;
+  if (existingEntry && existingEntry.status !== 'deleted') {
+    await updateJournalEntry(existingEntry.id, { date: sale.date, description, lines });
+    return existingEntry.id;
+  }
+
+  const entryNumber = await generateNextEntryNumber();
+  const newEntryId = await createJournalEntry({ entryNumber, date: sale.date, description, lines });
+  await dbUpdate('BulkSaleBatches', saleId, { journalEntryId: newEntryId });
+  return newEntryId;
+}
+
+async function reverseBulkSaleJournalEntry(saleId) {
+  const sale = await getBulkSaleById(saleId);
+  if (sale && sale.journalEntryId) {
+    await deleteJournalEntry(sale.journalEntryId);
   }
 }

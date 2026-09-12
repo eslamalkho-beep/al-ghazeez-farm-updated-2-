@@ -1,5 +1,5 @@
 // js/services/location-service.js
-// حظائر/مواقع القطيع — "تكويدات" بسيطة (اسم فقط) بنفس نمط category-service.js/party-service.js،
+// حظائر/مواقع القطيع — "تكويدات" بسيطة (اسم فقط) بنفس نمط party-service.js الأساسي،
 // تُربَط بـ Animals.locationId
 
 async function getAllLocations() {

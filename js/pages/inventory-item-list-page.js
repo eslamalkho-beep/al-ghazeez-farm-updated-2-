@@ -12,6 +12,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderSidebar('inventory');
   renderHeader('المخزون والمستلزمات');
 
+  if (!hasActionPermission('inventory', 'add')) {
+    document.getElementById('add-item-btn').style.display = 'none';
+  }
+  if (!hasActionPermission('inventory', 'export')) {
+    document.getElementById('export-excel-btn').style.display = 'none';
+  }
+  if (!hasActionPermission('inventory', 'export') || !hasActionPermission('inventory', 'print')) {
+    document.getElementById('export-pdf-btn').style.display = 'none';
+  }
+
   await _refreshInventoryItems();
 
   document.getElementById('add-item-btn').addEventListener('click', () => _openItemModal(null));
@@ -59,7 +69,13 @@ function _drawInventoryItems() {
   _currentExportRows = rows;
 
   renderDataTable('inventory-item-table', columns, rows, {
-    onRowClick: (row) => _openItemModal(row),
+    onRowClick: (row) => {
+      if (!hasActionPermission('inventory', 'edit')) {
+        showToast('ليس لديك صلاحية تعديل أصناف المخزون', 'error');
+        return;
+      }
+      _openItemModal(row);
+    },
     emptyMessage: 'لا توجد أصناف مكوَّدة بعد',
   });
 }
@@ -92,7 +108,7 @@ function _openItemModal(item) {
         <textarea id="m-notes" class="form-control">${item?.notes || ''}</textarea>
       </div>
 
-      ${isEdit ? `
+      ${isEdit && hasActionPermission('inventory', 'delete') ? `
       <div class="form-group form-group--full" style="border-top:1px solid var(--color-border); padding-top: var(--spacing-3);">
         <button type="button" class="btn btn--danger btn--sm" id="delete-item-btn">حذف هذا الصنف</button>
       </div>` : ''}
@@ -128,7 +144,7 @@ function _openItemModal(item) {
     },
   });
 
-  if (isEdit) {
+  if (isEdit && hasActionPermission('inventory', 'delete')) {
     document.getElementById('delete-item-btn').addEventListener('click', () => {
       confirmDelete('هل أنت متأكد من حذف هذا الصنف؟ ستبقى حركات المخزون المرتبطة به كسجل تاريخي.', async () => {
         await deleteInventoryItem(item.id);

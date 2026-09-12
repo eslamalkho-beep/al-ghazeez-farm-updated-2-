@@ -4,7 +4,7 @@ let _allTransfersCache = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth('accounting');
-  renderSidebar('accounting');
+  renderSidebar('accounting-cash-transfer');
   renderHeader('تحويل صندوق ↔ بنك');
 
   document.getElementById('date').value = todayIso();
@@ -25,6 +25,8 @@ async function _handleSubmit(e) {
     { fieldId: 'amount', validatorFn: isPositiveNumber, message: 'أدخل مبلغًا صحيحًا' },
   ]);
   if (!isValid) return;
+
+  if (!(await guardPeriodOpenForSave(date))) return;
 
   const saveBtn = document.getElementById('save-transfer-btn');
   saveBtn.disabled = true;

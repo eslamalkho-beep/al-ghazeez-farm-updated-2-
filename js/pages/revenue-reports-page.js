@@ -8,11 +8,11 @@ let _currentExportRows = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth('reports');
-  renderSidebar('reports');
+  renderSidebar('reports-revenue');
   renderHeader('تقارير الإيرادات');
 
   _allRevenuesForReport = await getAllRevenues();
-  _revenueCategoriesForReport = await getCategoryNames('revenue');
+  _revenueCategoriesForReport = await getCategoryAccountNames('revenue');
 
   document.getElementById('compare-category').innerHTML += _revenueCategoriesForReport.map(c => `<option value="${c}">${c}</option>`).join('');
 

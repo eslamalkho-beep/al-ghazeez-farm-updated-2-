@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>سجل التلقيح | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2 id="page-title">سجل التلقيح</h2>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn btn--outline" id="export-excel-btn">تصدير Excel</button>
+            <button type="button" class="btn btn--outline" id="export-pdf-btn">تصدير PDF</button>
+            <a href="herd-list.html" class="btn btn--outline">→ سجل القطيع</a>
+          </div>
+        </div>
+
+        <div class="card" id="mating-form-card" style="margin-bottom: var(--spacing-4);">
+          <div class="card__header"><h3>تسجيل تلقيح جديد</h3></div>
+
+          <form id="mating-form" class="form-grid" novalidate>
+            <div class="form-group">
+              <label for="animalId">الأنثى <span class="required">*</span></label>
+              <select id="animalId" class="form-control"></select>
+              <span class="form-error">يرجى اختيار الأنثى</span>
+            </div>
+
+            <div class="form-group">
+              <label for="date">تاريخ التلقيح <span class="required">*</span></label>
+              <input type="date" id="date" class="form-control" />
+              <span class="form-error">التاريخ مطلوب</span>
+            </div>
+
+            <div class="form-group">
+              <label for="method">نوع التلقيح</label>
+              <select id="method" class="form-control">
+                <option value="natural">طبيعي</option>
+                <option value="ai">اصطناعي</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="maleInfo">الفحل / مصدر التلقيح</label>
+              <input type="text" id="maleInfo" class="form-control" placeholder="كود الفحل أو اسم المصدر (اختياري)" />
+            </div>
+
+            <div class="form-group form-group--full">
+              <label for="notes">ملاحظات</label>
+              <input type="text" id="notes" class="form-control" />
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn--success" id="save-mating-btn">حفظ التلقيح</button>
+              <a href="#" id="add-pregnancy-link" class="btn btn--outline" style="display:none;">+ تسجيل حمل لهذه الأنثى</a>
+            </div>
+          </form>
+        </div>
+
+        <div class="card__header" style="padding: 0 4px; display:flex; justify-content:space-between; align-items:center;">
+          <h3 id="table-title">سجل التلقيح الكامل</h3>
+          <a href="mating.html" id="clear-animal-filter-link" style="display:none; font-size:13px;">عرض كل الحيوانات</a>
+        </div>
+        <div id="mating-table"></div>
+      </main>
+    </div>
+  </div>
+
+  <div id="modal-root"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+  <script src="../js/db/db.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/animal-service.js"></script>
+  <script src="../js/services/mating-service.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/quick-action-fab.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/components/data-table.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+  <script src="../js/components/export-utils.js"></script>
+  <script src="../js/pages/mating-page.js"></script>
+</body>
+</html>

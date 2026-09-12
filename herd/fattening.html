@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>سجل التسمين | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2 id="page-title">سجل التسمين</h2>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn btn--outline" id="export-excel-btn">تصدير Excel</button>
+            <button type="button" class="btn btn--outline" id="export-pdf-btn">تصدير PDF</button>
+            <a href="herd-list.html" class="btn btn--outline">→ سجل القطيع</a>
+          </div>
+        </div>
+
+        <p style="color: var(--color-text-secondary); margin-top:-8px; margin-bottom: var(--spacing-4);">
+          الحظيرة ← الدفعة ← الحيوان: دفعة تسمين = مجموعة حيوانات في نفس الحظيرة تتغذى مع بعض في نفس الفترة.
+          اربط أي مصروف خاص بالدفعة كلها (علف، أدوية، فيتامينات، أو غيرها) بالدفعة من نموذج تكويد المصروف
+          («ربط بدفعة تسمين»)، أو اربط حركة صرف من مخزون علف/أدوية موجود أصلاً مباشرة من «حركات المخزون» —
+          ليُحسب نصيب كل حيوان من التكلفة تلقائيًا حسب طريقة التوزيع المختارة للدفعة (أيام الإقامة/بالتساوي/حسب
+          الوزن). أما علاج/تحصين خاص بحيوان بعينه فيُسجَّل كالمعتاد من السجل الصحي، ويُحتسب على ذلك الحيوان فقط.
+        </p>
+
+        <div class="card" style="margin-bottom: var(--spacing-4);">
+          <div class="card__header"><h3>بدء دفعة تسمين جديدة</h3></div>
+          <form id="batch-form" class="form-grid" novalidate>
+            <div class="form-group">
+              <label for="startDate">تاريخ البدء <span class="required">*</span></label>
+              <input type="date" id="startDate" class="form-control" />
+              <span class="form-error">التاريخ مطلوب</span>
+            </div>
+            <div class="form-group">
+              <label for="locationId">الحظيرة (اختياري)</label>
+              <select id="locationId" class="form-control">
+                <option value="">بدون تحديد</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="allocationMethod">طريقة توزيع التكلفة الجماعية</label>
+              <select id="allocationMethod" class="form-control">
+                <option value="days">حسب أيام الإقامة (افتراضي)</option>
+                <option value="equal">بالتساوي على الرؤوس</option>
+                <option value="weight">حسب الوزن</option>
+              </select>
+            </div>
+            <div class="form-group form-group--full">
+              <label for="notes">ملاحظات</label>
+              <input type="text" id="notes" class="form-control" placeholder="مثال: دفعة ذكور غنم للبيع" />
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn--success" id="save-batch-btn">بدء الدفعة</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card__header" style="padding: 0 4px; display:flex; justify-content:space-between; align-items:center;">
+          <h3 id="table-title">دفعات التسمين</h3>
+          <a href="fattening.html" id="clear-animal-filter-link" style="display:none; font-size:13px;">عرض كل الدفعات</a>
+        </div>
+        <div id="batches-table"></div>
+      </main>
+    </div>
+  </div>
+
+  <div id="modal-root"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+  <script src="../js/db/db.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/animal-service.js"></script>
+  <script src="../js/services/weight-service.js"></script>
+  <script src="../js/services/health-service.js"></script>
+  <script src="../js/services/expense-service.js"></script>
+  <script src="../js/services/revenue-service.js"></script>
+  <script src="../js/services/death-service.js"></script>
+  <script src="../js/services/location-service.js"></script>
+  <script src="../js/services/inventory-service.js"></script>
+  <script src="../js/services/fattening-service.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/quick-action-fab.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/components/data-table.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+  <script src="../js/components/export-utils.js"></script>
+  <script src="../js/pages/fattening-page.js"></script>
+</body>
+</html>

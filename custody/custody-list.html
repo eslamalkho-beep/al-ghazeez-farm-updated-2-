@@ -20,19 +20,17 @@
         <div class="page-header">
           <h2>سجل العهد</h2>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <a href="custody-hub.html" class="btn btn--outline">→ إدارة العهد</a>
             <button type="button" class="btn btn--outline" id="export-custody-excel-btn">تصدير Excel</button>
             <button type="button" class="btn btn--outline" id="export-custody-pdf-btn">تصدير PDF</button>
-            <button class="btn btn--success" id="add-custody-btn">+ تكويد عهدة</button>
+            <a href="custody-issue.html" class="btn btn--success">+ إصدار عهدة</a>
           </div>
         </div>
         <div id="custody-table"></div>
 
         <div class="card__header" style="padding: var(--spacing-4) 4px 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-          <h3>كشف حساب العهد حسب الموظف (مدين / دائن / الرصيد)</h3>
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button type="button" class="btn btn--outline" id="export-ledger-excel-btn">تصدير Excel</button>
-            <button type="button" class="btn btn--outline" id="export-ledger-pdf-btn">تصدير PDF</button>
-          </div>
+          <h3>ملخّص أرصدة العهد حسب الموظف</h3>
+          <a href="employee-statement.html" class="btn btn--outline">كشف حساب موظف مفصّل →</a>
         </div>
         <div class="kpi-grid" id="custody-ledger-summary" style="margin-top: var(--spacing-3);"></div>
         <div id="custody-ledger-table"></div>
@@ -41,10 +39,13 @@
   </div>
   <div id="modal-root"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
   <script src="../js/services/auth-service.js"></script>
-  <script src="../js/services/notification-service.js"></script>
+  <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/services/inventory-service.js"></script>
+  <script src="../js/services/custody-service.js"></script>
   <script src="../js/utils/formatters.js"></script>
   <script src="../js/utils/validators.js"></script>
   <script src="../js/components/sidebar.js"></script>
@@ -53,7 +54,11 @@
   <script src="../js/components/modal.js"></script>
   <script src="../js/components/toast.js"></script>
   <script src="../js/components/data-table.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
   <script src="../js/components/export-utils.js"></script>
+  <script src="../js/services/attachment-service.js"></script>
+  <script src="../js/components/attachment-manager.js"></script>
   <script src="../js/pages/custody-list-page.js"></script>
 </body>
 </html>

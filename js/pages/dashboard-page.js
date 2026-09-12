@@ -5,12 +5,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderSidebar('dashboard');
   renderHeader('لوحة التحكم');
 
-  const [animals, expenses, revenues, purchases, bulkBatches, births, deaths, healthRecords, custodyItems, employees, inventoryItems, inventoryMovements] = await Promise.all([
+  const [animals, expenses, revenues, purchases, bulkPurchases, bulkSales, births, deaths, healthRecords, custodyItems, employees, inventoryItems, inventoryMovements] = await Promise.all([
     getAllAnimals(),
     getAllExpenses(),
     getAllRevenues(),
     getAllPurchases(),
-    getAllBulkBatches(),
+    getAllBulkPurchases(),
+    getAllBulkSales(),
     getAllBirths(),
     getAllDeaths(),
     dbGetAll('HealthRecords'),
@@ -20,16 +21,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     getAllInventoryMovements(),
   ]);
 
-  renderKpiCards({ animals, expenses, revenues, purchases, bulkBatches, births, deaths, healthRecords, custodyItems, employees, inventoryItems, inventoryMovements });
+  renderKpiCards({ animals, expenses, revenues, purchases, bulkPurchases, bulkSales, births, deaths, healthRecords, custodyItems, employees, inventoryItems, inventoryMovements });
   renderRevenueExpenseChart(expenses, revenues);
   renderHerdTypeChart(animals);
   renderHerdGenderChart(animals);
   renderHerdHealthChart(animals);
   renderBirthsDeathsChart(births, deaths);
-  renderQuickAlerts({ healthRecords, custodyItems, expenses, purchases, animals, inventoryItems, inventoryMovements });
+  await renderQuickAlerts();
 });
 
-function renderKpiCards({ animals, expenses, revenues, purchases, bulkBatches, births, deaths, healthRecords, custodyItems, employees, inventoryItems, inventoryMovements }) {
+function renderKpiCards({ animals, expenses, revenues, purchases, bulkPurchases, bulkSales, births, deaths, healthRecords, custodyItems, employees, inventoryItems, inventoryMovements }) {
   const alive = animals.filter(a => a.status === 'alive');
   const males = alive.filter(a => a.gender === 'male').length;
   const females = alive.filter(a => a.gender === 'female').length;
@@ -38,25 +39,31 @@ function renderKpiCards({ animals, expenses, revenues, purchases, bulkBatches, b
   const totalRevenues = revenues.reduce((sum, r) => sum + Number(r.amount || 0), 0);
   const totalPurchases = purchases.reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
-  const bulkTotals = bulkBatches.reduce((acc, b) => {
-    const t = computeBulkBatchTotals(b);
-    acc.purchaseCost += t.totalPurchaseCost;
-    acc.saleRevenue += t.totalSaleRevenue;
-    acc.expenses += t.totalExpenses;
-    acc.remainingCount += t.remainingCount;
+  // بيع − تكلفة البضاعة المباعة (COGS) = ربح الجملة الفعلي، لا يظهر إلا عند البيع الفعلي (متوسط تكلفة
+  // متحرك مبني على الشراء فقط) — بعكس النموذج القديم الذي كان يحمّل تكلفة الشراء كمصروف فوري بصرف النظر
+  // عن البيع، انظر computeBulkGroupBalances في bulk-batch-service.js
+  const bulkGroups = computeBulkGroupBalances(bulkPurchases, bulkSales);
+  const bulkTotals = bulkGroups.reduce((acc, g) => {
+    acc.saleRevenue += g.soldRevenue;
+    acc.cogs += g.cogs;
+    acc.remainingCount += g.remainingCount;
     return acc;
-  }, { purchaseCost: 0, saleRevenue: 0, expenses: 0, remainingCount: 0 });
-  const totalBulkPurchases = bulkTotals.purchaseCost;
+  }, { saleRevenue: 0, cogs: 0, remainingCount: 0 });
   const totalBulkSales = bulkTotals.saleRevenue;
-  const totalBulkExpenses = bulkTotals.expenses;
+  const totalBulkCogs = bulkTotals.cogs;
   const bulkRemainingCount = bulkTotals.remainingCount;
-  const bulkNetRevenue = totalBulkSales - totalBulkPurchases - totalBulkExpenses;
-  const netProfit = totalRevenues + totalBulkSales - totalExpenses - totalPurchases - totalBulkPurchases - totalBulkExpenses;
+  const bulkGrossProfit = totalBulkSales - totalBulkCogs;
+  // ⚠️ المشتريات (Purchases) لا تدخل صافي الربح — بندها صار حصرًا حسابات مخزون (فرع 113، انظر
+  // getPurchaseCategoryAccounts في accounting-service.js ووصف Purchases في CLAUDE.md)، فتُرسمَل كأصل مخزون
+  // (رسملة) لا كتكلفة تشغيلية فورية؛ نفس مبدأ استبعاد مشتريات الجملة (تُرسمَل كأصل "1035" ولا تدخل الربح إلا
+  // عبر تكلفة البضاعة المباعة عند البيع الفعلي، totalBulkCogs أدناه). كانت تُطرح بالكامل قبل هذا التغيير
+  // بافتراض أنها دومًا تكلفة تشغيلية — لم يعد هذا الافتراض صحيحًا
+  const netProfit = totalRevenues + totalBulkSales - totalExpenses - totalBulkCogs;
 
   const sickCount = alive.filter(a => a.healthStatus === 'sick' || a.healthStatus === 'underTreatment').length;
   const activeEmployees = employees.filter(e => e.status === 'active').length;
   const totalCustodyValue = custodyItems
-    .filter(c => c.status !== 'settled' && c.status !== 'deleted')
+    .filter(c => c.status === 'open' || c.status === 'partially_settled')
     .reduce((sum, c) => sum + (Number(c.amount || 0) - Number(c.settledAmount || 0)), 0);
 
   const lowStockCount = inventoryItems.filter(item => computeItemStockLevel(item, inventoryMovements).isLowStock).length;
@@ -69,7 +76,7 @@ function renderKpiCards({ animals, expenses, revenues, purchases, bulkBatches, b
     { label: 'إجمالي الإيرادات', value: formatCurrency(totalRevenues), sub: 'كل الفترات', color: 'green', icon: '💰' },
     { label: 'إجمالي المصروفات', value: formatCurrency(totalExpenses), sub: 'كل الفترات', color: 'red', icon: '🧾' },
     { label: 'إجمالي المشتريات', value: formatCurrency(totalPurchases), sub: 'كل الفترات', color: 'red', icon: '🛒' },
-    { label: 'صافي إيراد الشراء والبيع الجماعي', value: formatCurrency(bulkNetRevenue), sub: 'بيع − شراء − مصاريف الجملة', color: bulkNetRevenue >= 0 ? 'green' : 'red', icon: '📦' },
+    { label: 'إجمالي ربح الشراء والبيع الجماعي', value: formatCurrency(bulkGrossProfit), sub: 'إيراد البيع − تكلفة البضاعة المباعة', color: bulkGrossProfit >= 0 ? 'green' : 'red', icon: '📦' },
     { label: 'الرؤوس المتبقية من الجملة', value: formatNumber(bulkRemainingCount), sub: 'شراء جملة − بيع جملة (كل الفترات)', color: bulkRemainingCount < 0 ? 'red' : 'blue', icon: '🐐' },
     { label: 'صافي الربح', value: formatCurrency(netProfit), sub: netProfit >= 0 ? 'أداء إيجابي' : 'أداء سلبي', color: netProfit >= 0 ? 'green' : 'red', icon: '📊' },
     { label: 'الموظفون النشطون', value: formatNumber(activeEmployees), sub: `قيمة العهد الحالية: ${formatCurrency(totalCustodyValue)}`, color: 'blue', icon: '👥' },
@@ -154,45 +161,24 @@ function renderBirthsDeathsChart(births, deaths) {
   ]);
 }
 
-function renderQuickAlerts({ healthRecords, custodyItems, expenses, purchases, animals, inventoryItems, inventoryMovements }) {
-  const alerts = [];
-
-  const activeSickAnimals = animals.filter(a => a.healthStatus === 'sick' || a.healthStatus === 'underTreatment');
-  activeSickAnimals.forEach(a => {
-    alerts.push({ dot: 'red', text: `الحيوان ${a.code} يحتاج متابعة صحية عاجلة` });
-  });
-
-  const openCustody = custodyItems.filter(c => c.status === 'open' || c.status === 'partially_settled');
-  if (openCustody.length) {
-    alerts.push({ dot: 'warning', text: `يوجد ${openCustody.length} عهدة نقدية غير مسوّاة بالكامل` });
-  }
-
-  const pendingExpenses = expenses.filter(e => e.status === 'pending');
-  if (pendingExpenses.length) {
-    alerts.push({ dot: 'blue', text: `يوجد ${pendingExpenses.length} مصروف بانتظار الاعتماد` });
-  }
-
-  const pendingPurchases = purchases.filter(p => p.status === 'pending');
-  if (pendingPurchases.length) {
-    alerts.push({ dot: 'blue', text: `يوجد ${pendingPurchases.length} مشترى بانتظار الاعتماد` });
-  }
-
-  inventoryItems.forEach(item => {
-    const { currentQty, isLowStock } = computeItemStockLevel(item, inventoryMovements);
-    if (isLowStock) {
-      alerts.push({ dot: 'warning', text: `الصنف "${item.name}" وصل لحد الطلب (المتبقي: ${formatNumber(currentQty)} ${item.unit || ''})` });
-    }
-  });
-
+// نسخة مختصرة (أول 6 فقط) من مركز التنبيهات الكامل (notifications/alerts-center.html) — كلاهما مبني فوق
+// computeAllAlerts() في alerts-service.js، المصدر الوحيد لمنطق حساب التنبيهات (10 فئات، انظر ذلك الملف)
+async function renderQuickAlerts() {
+  // غير المقروءة فقط — نفس منطق مركز التنبيهات (alerts-center-page.js): تنبيه مُعلَّم كمقروء يختفي من كل
+  // عروض "التنبيهات السريعة"، لا يبقى ظاهرًا هنا بعد أن اختفى هناك
+  const alerts = (await computeAllAlerts()).filter(a => !a.isRead);
   const container = document.getElementById('quick-alerts');
   if (!alerts.length) {
     container.innerHTML = '<div class="empty-state">لا توجد تنبيهات حاليًا 👍</div>';
     return;
   }
   container.innerHTML = alerts.slice(0, 6).map(a => `
-    <div class="quick-alert-item">
-      <span class="quick-alert-dot quick-alert-dot--${a.dot}"></span>
-      <span>${a.text}</span>
-    </div>
+    <a class="quick-alert-item" href="${a.href}" style="text-decoration:none; color:inherit;">
+      <span class="quick-alert-dot quick-alert-dot--${a.severity}"></span>
+      <span>
+        <strong>${a.title}</strong> — ${a.message}
+        <span style="display:inline-block; margin-inline-start:8px; font-size:11px; color: var(--color-text-secondary); white-space:nowrap;">${formatDateArabic(a.date)}</span>
+      </span>
+    </a>
   `).join('');
 }

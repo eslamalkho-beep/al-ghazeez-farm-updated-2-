@@ -6,7 +6,7 @@ let _weightFilterAnimalId = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth('herd');
-  renderSidebar('herd');
+  renderSidebar('herd-weights');
   renderHeader('سجل الوزن');
 
   const params = new URLSearchParams(window.location.search);

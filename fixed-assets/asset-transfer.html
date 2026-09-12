@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>نقل أصل ثابت | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2>🔄 نقل الأصل</h2>
+          <a href="#" id="back-link" class="btn btn--outline">→ العودة لبطاقة الأصل</a>
+        </div>
+        <div class="card" style="margin-bottom: var(--spacing-3);">
+          <strong id="asset-label"></strong>
+          <div style="font-size:12.5px; color: var(--color-text-secondary); margin-top:4px;" id="asset-current-info"></div>
+        </div>
+        <div class="card">
+          <form id="transfer-form" class="form-grid" novalidate>
+            <div class="form-group">
+              <label for="date">تاريخ النقل <span class="required">*</span></label>
+              <input type="date" id="date" class="form-control" />
+              <span class="form-error">التاريخ مطلوب</span>
+            </div>
+            <div class="form-group">
+              <label for="locationId">الموقع/الحظيرة الجديد</label>
+              <select id="locationId" class="form-control"><option value="">-- بلا موقع محدد --</option></select>
+            </div>
+            <div class="form-group">
+              <label for="responsibleEmployeeId">المسؤول الجديد</label>
+              <select id="responsibleEmployeeId" class="form-control"><option value="">-- بلا مسؤول محدد --</option></select>
+            </div>
+            <div class="form-group form-group--full">
+              <label for="notes">ملاحظات</label>
+              <textarea id="notes" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn--success" id="save-btn">تنفيذ النقل</button>
+              <a href="#" id="cancel-link" class="btn btn--outline">إلغاء</a>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div id="modal-root"></div>
+
+  <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/services/fixed-asset-service.js"></script>
+  <script src="../js/services/location-service.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/quick-action-fab.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/pages/asset-transfer-page.js"></script>
+</body>
+</html>

@@ -17,27 +17,44 @@ async function deleteExpense(id) {
   return dbSoftDelete('Expenses', id);
 }
 
+// إجمالي المصروفات المربوطة مباشرة بحيوان بعينه (Expenses.linkedAnimalId) — تكلفة فردية مباشرة (علاج، دواء
+// خاص، أو أي تكلفة أخرى غير مشتركة مع باقي القطيع) بمعزل تام عن السجل الصحي (HealthRecords.cost) وعن أي
+// دفعة تسمين (linkedFatteningBatchId، تكلفة مشتركة موزَّعة لا فردية) — انظر Expenses.linkedAnimalId في CLAUDE.md.
+// from/to اختياريان لحصر الفترة (مستخدمة من fattening-service.js لحصر فترة تواجد الحيوان بدفعة معيّنة)
+function getAnimalLinkedExpensesTotal(animalId, expenses, { from, to } = {}) {
+  return (expenses || [])
+    .filter(e => e.status !== 'deleted' && Number(e.linkedAnimalId) === Number(animalId)
+      && (!from || e.date >= from) && (!to || e.date <= to))
+    .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+}
+
 // أول نقطة ترحيل تلقائي فعلية من وحدة المصروفات للمحاسبة — قيد واحد "مُعاد الصياغة" لكل مصروف
 // (يُحدَّث في مكانه عند أي تعديل، لا دورة ذمم دائنة/سداد منفصلة — تبسيط مقصود)
-const EXPENSE_FALLBACK_ACCOUNT_CODE = '5080'; // مصروفات أخرى — لبند بلا ربط حساب في شاشة التكويدات
-const EXPENSE_CREDIT_ACCOUNT_CODE_BY_PAYMENT = { cash: '1000', transfer: '1010', cheque: '1010' };
-const EXPENSE_PAYABLE_ACCOUNT_CODE = '2000'; // ذمم دائنة — أثناء status === 'pending' (لم يُدفع بعد)
-
-// ينشئ/يحدّث قيد يومية يعكس الحالة الحالية للمصروف (مدين حساب البند المرتبط أو "مصروفات أخرى"،
-// دائن حسب طريقة الدفع أو "ذمم دائنة" إن كان بانتظار الاعتماد)، ويخزّن journalEntryId على المصروف نفسه للتتبّع
+// الحسابات تُحل عبر "ربط العمليات بالحسابات" (account-mapping-service.js): cash/bank لطرق الدفع،
+// apControl للمصروف المعلّق بانتظار الاعتماد، expenseFallback دفاعيًا لسجل بلا categoryAccountId
 async function syncExpenseJournalEntry(expenseId) {
   const expense = await dbGet('Expenses', expenseId);
   if (!expense || Number(expense.amount) <= 0) return null;
 
-  const [categories, accounts] = await Promise.all([getAllCategories('expense'), getAllAccounts()]);
-  const category = categories.find(c => c.name === expense.category);
-  const debitAccount = (category && category.linkedAccountId && accounts.find(a => a.id === category.linkedAccountId))
-    || getAccountByCode(EXPENSE_FALLBACK_ACCOUNT_CODE, accounts);
+  const [accounts, mappings] = await Promise.all([getAllAccounts(), loadAccountMappings()]);
+  // البند صار حسابًا مباشرة من شجرة الحسابات (categoryAccountId) — مطابقة الاسم النصي القديم خط دفاع ثانٍ فقط
+  // لسجلات سابقة لم تُرحَّل بعد (انظر _migrateCategoryToAccountIdIfNeeded في seed.js)
+  const categoryAccount = (expense.categoryAccountId && accounts.find(a => a.id === expense.categoryAccountId))
+    || accounts.find(a => a.type === 'expense' && a.name === expense.category)
+    || null;
+  const debitAccount = categoryAccount || getMappedAccount('expenseFallback', accounts, mappings);
 
-  const creditCode = expense.status === 'pending'
-    ? EXPENSE_PAYABLE_ACCOUNT_CODE
-    : (EXPENSE_CREDIT_ACCOUNT_CODE_BY_PAYMENT[expense.paymentMethod] || EXPENSE_CREDIT_ACCOUNT_CODE_BY_PAYMENT.cash);
-  const creditAccount = getAccountByCode(creditCode, accounts);
+  // دائن بتراجع تدريجي: حساب البند لهذه الطريقة (catPayCash/Bank:<id>) > العام
+  let creditAccount = null;
+  const catCashKey = categoryAccount ? `catPayCash:${categoryAccount.id}` : null;
+  const catBankKey = categoryAccount ? `catPayBank:${categoryAccount.id}` : null;
+  if (expense.status === 'pending') {
+    creditAccount = getMappedAccount('expensePayPending', accounts, mappings);
+  } else if (expense.paymentMethod === 'cash') {
+    creditAccount = getMappedAccountWithFallback([catCashKey, 'expensePayCash'], accounts, mappings);
+  } else {
+    creditAccount = getMappedAccountWithFallback([catBankKey, 'expensePayBank'], accounts, mappings);
+  }
 
   if (!debitAccount || !creditAccount) return null; // دفاعي: حساب أساسي محذوف يدويًا من شجرة الحسابات
 

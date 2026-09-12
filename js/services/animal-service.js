@@ -26,13 +26,18 @@ async function isAnimalCodeTaken(code, excludeId = null) {
   return all.some(a => a.code === code && a.id !== excludeId);
 }
 
-async function generateNextAnimalCode() {
+// بادئة تكويد القطيع حسب النوع: الأغنام SH- والماعز GO- (بدل البادئة القديمة GZ- للجميع) — الأكواد
+// القديمة GZ-xxxx تبقى كما هي، والعدّاد مستقل لكل بادئة (SH-0001 وGO-0001 يبدآن منفصلين)
+const ANIMAL_CODE_PREFIX_BY_TYPE = { sheep: 'SH-', goat: 'GO-' };
+
+async function generateNextAnimalCode(type) {
+  const prefix = ANIMAL_CODE_PREFIX_BY_TYPE[type] || ANIMAL_CODE_PREFIX_BY_TYPE.sheep;
   const all = await getAllAnimals();
   const numbers = all
-    .map(a => (a.code && a.code.startsWith('GZ-')) ? parseInt(a.code.replace('GZ-', ''), 10) : 0)
+    .map(a => (a.code && a.code.startsWith(prefix)) ? parseInt(a.code.replace(prefix, ''), 10) : 0)
     .filter(n => !isNaN(n));
   const next = (numbers.length ? Math.max(...numbers) : 0) + 1;
-  return `GZ-${String(next).padStart(4, '0')}`;
+  return `${prefix}${String(next).padStart(4, '0')}`;
 }
 
 const ANIMAL_TYPE_LABELS = { sheep: 'غنم', goat: 'ماعز' };

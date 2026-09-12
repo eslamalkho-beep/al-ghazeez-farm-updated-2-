@@ -41,7 +41,10 @@
             <div class="chart-box"><canvas id="births-deaths-chart"></canvas></div>
           </div>
           <div class="card">
-            <div class="card__header"><h3>تنبيهات سريعة</h3></div>
+            <div class="card__header" style="display:flex; justify-content:space-between; align-items:center;">
+              <h3>تنبيهات سريعة</h3>
+              <a href="notifications/alerts-center.html" style="font-size:12.5px;">عرض كل التنبيهات ←</a>
+            </div>
             <div id="quick-alerts"></div>
           </div>
         </div>
@@ -65,8 +68,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 
   <script src="js/db/db.js"></script>
+<script src="js/services/account-mapping-service.js"></script>
   <script src="js/services/auth-service.js"></script>
-  <script src="js/services/notification-service.js"></script>
   <script src="js/services/animal-service.js"></script>
   <script src="js/services/birth-service.js"></script>
   <script src="js/services/death-service.js"></script>
@@ -75,6 +78,12 @@
   <script src="js/services/purchase-service.js"></script>
   <script src="js/services/bulk-batch-service.js"></script>
   <script src="js/services/inventory-service.js"></script>
+  <script src="js/services/vaccination-service.js"></script>
+  <script src="js/services/pregnancy-service.js"></script>
+  <script src="js/services/custody-service.js"></script>
+  <script src="js/services/party-service.js"></script>
+  <script src="js/services/accounting-service.js"></script>
+  <script src="js/services/alerts-service.js"></script>
   <script src="js/utils/formatters.js"></script>
   <script src="js/components/sidebar.js"></script>
   <script src="js/components/quick-action-fab.js"></script>

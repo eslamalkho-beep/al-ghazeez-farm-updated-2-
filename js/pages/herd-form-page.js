@@ -1,7 +1,6 @@
 // js/pages/herd-form-page.js
 
 let _editingAnimalId = null;
-let _originalHealthStatus = null;
 let _currentAnimal = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -11,6 +10,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const params = new URLSearchParams(window.location.search);
   const idParam = params.get('id');
+
+  const _requiredAction = idParam ? 'edit' : 'add';
+  if (!hasActionPermission('herd', _requiredAction)) {
+    showToast(idParam ? 'ليس لديك صلاحية تعديل بيانات القطيع' : 'ليس لديك صلاحية إضافة حيوان', 'error');
+    window.location.href = 'herd-list.html';
+    return;
+  }
+  if (!hasActionPermission('herd', 'print')) {
+    document.getElementById('print-card-btn').style.display = 'none';
+  }
 
   const [locations, allAnimals] = await Promise.all([getAllLocations(), getAllAnimals()]);
 
@@ -32,9 +41,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     _editingAnimalId = Number(idParam);
     await _loadAnimalIntoForm(_editingAnimalId);
     document.getElementById('form-title').textContent = 'تعديل بيانات الحيوان';
-    document.getElementById('delete-btn').style.display = 'inline-flex';
+    if (hasActionPermission('herd', 'delete')) {
+      document.getElementById('delete-btn').style.display = 'inline-flex';
+    }
   } else {
-    document.getElementById('code').value = await generateNextAnimalCode();
+    document.getElementById('code').value = await generateNextAnimalCode(document.getElementById('type').value);
+    // عند تغيير النوع في وضع الإنشاء: يُعاد توليد الكود تلقائيًا بالبادئة الجديدة (SH- للأغنام / GO- للماعز)
+    // ما لم يكن المستخدم قد عدّل الكود يدويًا — التعديل اليدوي يُحترم ولا يُعاد توليده
+    document.getElementById('type').addEventListener('change', async (e) => {
+      if (_editingAnimalId) return;
+      const codeInput = document.getElementById('code');
+      const isAutoCode = /^(SH|GO|GZ)-\d{4}$/i.test((codeInput.value || '').trim());
+      if (!codeInput.value.trim() || isAutoCode) {
+        codeInput.value = await generateNextAnimalCode(e.target.value);
+      }
+    });
+    // قادم من بوابة "شراء حيوان" (herd/animal-purchase.html) باختيار "شراء أصل" — تهيئة الحقول المناسبة لشراء
+    // مسبقًا (المصدر + تاريخ الاقتناء بتاريخ اليوم افتراضيًا، قابل للتعديل) بدل تركها للمستخدم يضبطها يدويًا
+    if (params.get('source') === 'purchased') {
+      document.getElementById('source').value = 'purchased';
+      document.getElementById('birthDate').value = todayIso();
+      document.getElementById('form-title').textContent = 'شراء حيوان (تكويد أصل جديد)';
+    }
   }
 
   document.getElementById('animal-form').addEventListener('submit', _handleSubmit);
@@ -73,8 +101,6 @@ async function _loadAnimalIntoForm(id) {
     document.getElementById('healthStatus-locked-hint').style.display = 'block';
   }
 
-  _originalHealthStatus = animal.healthStatus || 'healthy';
-
   const healthLink = document.getElementById('health-history-link');
   healthLink.href = `health.html?animalId=${animal.id}`;
   healthLink.style.display = 'inline-flex';
@@ -83,9 +109,24 @@ async function _loadAnimalIntoForm(id) {
   weightLink.href = `weights.html?animalId=${animal.id}`;
   weightLink.style.display = 'inline-flex';
 
+  const fatteningLink = document.getElementById('fattening-history-link');
+  fatteningLink.href = `fattening.html?animalId=${animal.id}`;
+  fatteningLink.style.display = 'inline-flex';
+
   const vaccinationLink = document.getElementById('vaccination-history-link');
   vaccinationLink.href = `vaccinations.html?animalId=${animal.id}`;
   vaccinationLink.style.display = 'inline-flex';
+
+  // سجل التلقيح/الحمل لا معنى له إلا للإناث
+  if (animal.gender === 'female') {
+    const matingLink = document.getElementById('mating-history-link');
+    matingLink.href = `mating.html?animalId=${animal.id}`;
+    matingLink.style.display = 'inline-flex';
+
+    const pregnancyLink = document.getElementById('pregnancy-history-link');
+    pregnancyLink.href = `pregnancy.html?animalId=${animal.id}`;
+    pregnancyLink.style.display = 'inline-flex';
+  }
 
   document.getElementById('print-card-btn').style.display = 'inline-flex';
 
@@ -133,23 +174,11 @@ async function _handleSubmit(e) {
   saveBtn.textContent = 'جاري الحفظ...';
 
   try {
-    const isNewAnimal = !_editingAnimalId;
     let savedAnimalId = _editingAnimalId;
     if (_editingAnimalId) {
       await updateAnimal(_editingAnimalId, data);
     } else {
       savedAnimalId = await createAnimal(data);
-    }
-
-    const becameSick = (data.healthStatus === 'sick' || data.healthStatus === 'underTreatment')
-      && (isNewAnimal || _originalHealthStatus !== data.healthStatus);
-    if (becameSick) {
-      await createNotification({
-        type: 'health',
-        title: `الحيوان ${data.code} يحتاج متابعة صحية`,
-        message: `تم تحديث الحالة الصحية للحيوان ${data.code} إلى ${ANIMAL_HEALTH_LABELS[data.healthStatus]}`,
-        relatedEntityId: savedAnimalId,
-      });
     }
 
     showToast('تم الحفظ بنجاح', 'success');

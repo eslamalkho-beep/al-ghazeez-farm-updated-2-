@@ -1,7 +1,8 @@
 // js/components/animal-card-print.js
-// بطاقة حيوان قابلة للطباعة برمز QR — نفس فكرة exportRowsToPdf (نافذة جديدة + window.print()، بلا مكتبة PDF
-// حقيقية) لكن لبطاقة واحدة بدل جدول. يتطلب تحميل مكتبة qrcodejs من CDN **قبل** هذا الملف، فقط في الصفحات
-// التي تحتاجه (حاليًا herd-form.html فقط) — لا تحميل عام لكل الصفحات
+// بطاقة حيوان قابلة للطباعة برمز QR — طباعة حقيقية (نافذة جديدة + window.print()، بلا تنزيل ملف)، بعكس
+// exportRowsToPdf في export-utils.js التي تُنزِّل ملف PDF فعلي مباشرة عبر html2canvas/jsPDF؛ هذه هنا لبطاقة
+// واحدة بدل جدول وبقصد الطباعة تحديدًا لا التصدير. يتطلب تحميل مكتبة qrcodejs من CDN **قبل** هذا الملف، فقط في
+// الصفحات التي تحتاجه (حاليًا herd-form.html فقط) — لا تحميل عام لكل الصفحات
 
 function printAnimalCardWithQr(animal) {
   if (typeof QRCode === 'undefined') {
@@ -24,6 +25,12 @@ function printAnimalCardWithQr(animal) {
   const qrImg = hiddenHost.querySelector('img');
   const qrDataUrl = qrImg ? qrImg.src : '';
   document.body.removeChild(hiddenHost);
+
+  // اسم المزرعة المخصّص من settings-page.js (نفس مفتاح localStorage 'alGhazeezFarmSettings') — انظر
+  // تعليق _sidebarGetFarmBranding في sidebar.js لتفسير القراءة المباشرة هنا بدل ملف service مشترك
+  let _farmSettings = {};
+  try { _farmSettings = JSON.parse(localStorage.getItem('alGhazeezFarmSettings') || '{}'); } catch (e) { _farmSettings = {}; }
+  const farmName = (_farmSettings.farmName && String(_farmSettings.farmName).trim()) || 'مزرعة الغزيز';
 
   const typeLabel = (typeof ANIMAL_TYPE_LABELS !== 'undefined' && ANIMAL_TYPE_LABELS[animal.type]) || animal.type || '-';
   const genderLabel = (typeof ANIMAL_GENDER_LABELS !== 'undefined' && ANIMAL_GENDER_LABELS[animal.gender]) || animal.gender || '-';
@@ -56,7 +63,7 @@ function printAnimalCardWithQr(animal) {
     <body>
       <div class="card">
         <h1>${animal.code || ''}</h1>
-        <div class="sub">مزرعة الغزيز</div>
+        <div class="sub">${farmName}</div>
         ${qrDataUrl ? `<img src="${qrDataUrl}" alt="QR" />` : ''}
         <table>
           <tr><td>النوع</td><td>${typeLabel}</td></tr>

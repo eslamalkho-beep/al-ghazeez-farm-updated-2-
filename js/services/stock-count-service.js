@@ -3,12 +3,13 @@
 // ينشئ تلقائيًا حركة "صادر" (تسوية جرد) في المخزون + قيد يومية (مدين مصروف / دائن مخزون)
 // في وحدة المحاسبة — أول نقطة ترحيل تلقائي فعلية في النظام (باقي الوحدات ما زالت قيودها يدوية بقصد)
 
-// تعيين ثابت (تصنيف صنف المخزون ← كود حساب المصروف/حساب المخزون) — وليس شاشة إعدادات قابلة للتعديل حاليًا
-const STOCK_COUNT_CATEGORY_ACCOUNT_CODES = {
-  fodder: { expenseCode: '5000', assetCode: '1030' },
-  medicine: { expenseCode: '5010', assetCode: '1030' },
-  equipment: { expenseCode: '5090', assetCode: '1031' },
-  other: { expenseCode: '5090', assetCode: '1031' },
+// تعيين ثابت (تصنيف صنف المخزون ← مفتاحي ربط "المخزون" في شاشة ربط العمليات بالحسابات) — الافتراضي:
+// الأعلاف على 61101/11301 والأدوية على 62101/11302 والمعدات/المستلزمات على 74107/11303
+const STOCK_COUNT_CATEGORY_MAPPING_KEYS = {
+  fodder: { expenseKey: 'inventoryExpenseFodder', assetKey: 'inventoryAssetFodder' },
+  medicine: { expenseKey: 'inventoryExpenseMedicine', assetKey: 'inventoryAssetMedicine' },
+  equipment: { expenseKey: 'inventoryExpenseEquipment', assetKey: 'inventoryAssetEquipment' },
+  other: { expenseKey: 'inventoryExpenseEquipment', assetKey: 'inventoryAssetEquipment' },
 };
 
 async function getAllStockCounts() {
@@ -67,16 +68,16 @@ function computeStockCountLinePreview(item, periodFrom, date, allMovements) {
 }
 
 // يبني سطور القيد اليومية المجمَّعة (بحسب زوج حسابات كل تصنيف) من سطور جرد "مستهلكة" فعليًا
-function _buildJournalLinesForStockCount(lines, itemsById, allAccounts) {
+function _buildJournalLinesForStockCount(lines, itemsById, allAccounts, mappings) {
   const totalsByAccountPair = {}; // "expenseId|assetId" -> value
   lines.forEach(line => {
     const value = Number(line.consumedValue || 0);
     if (value <= 0) return;
     const item = itemsById[line.itemId];
     if (!item) return;
-    const codes = STOCK_COUNT_CATEGORY_ACCOUNT_CODES[item.category] || STOCK_COUNT_CATEGORY_ACCOUNT_CODES.other;
-    const expenseAccount = getAccountByCode(codes.expenseCode, allAccounts);
-    const assetAccount = getAccountByCode(codes.assetCode, allAccounts);
+    const keys = STOCK_COUNT_CATEGORY_MAPPING_KEYS[item.category] || STOCK_COUNT_CATEGORY_MAPPING_KEYS.other;
+    const expenseAccount = getMappedAccount(keys.expenseKey, allAccounts, mappings);
+    const assetAccount = getMappedAccount(keys.assetKey, allAccounts, mappings);
     if (!expenseAccount || !assetAccount) return;
     const key = `${expenseAccount.id}|${assetAccount.id}`;
     if (!totalsByAccountPair[key]) totalsByAccountPair[key] = { expenseAccount, assetAccount, value: 0 };
@@ -96,7 +97,7 @@ async function approveStockCount(id) {
   const count = await getStockCountById(id);
   if (!count) throw new Error('الجرد غير موجود');
 
-  const [allItems, allAccounts] = await Promise.all([getAllInventoryItems(), getAllAccounts()]);
+  const [allItems, allAccounts, mappings] = await Promise.all([getAllInventoryItems(), getAllAccounts(), loadAccountMappings()]);
   const itemsById = Object.fromEntries(allItems.map(i => [i.id, i]));
 
   const updatedLines = [];
@@ -117,7 +118,7 @@ async function approveStockCount(id) {
     updatedLines.push({ ...line, movementId });
   }
 
-  const journalLines = _buildJournalLinesForStockCount(updatedLines, itemsById, allAccounts);
+  const journalLines = _buildJournalLinesForStockCount(updatedLines, itemsById, allAccounts, mappings);
   let journalEntryId = null;
   if (journalLines.length) {
     const entryNumber = await generateNextEntryNumber();

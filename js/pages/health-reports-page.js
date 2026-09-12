@@ -16,7 +16,7 @@ let _currentExportRows = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth('reports');
-  renderSidebar('reports');
+  renderSidebar('reports-health');
   renderHeader('تقارير السجل الصحي');
 
   [_reportAnimals, _reportHealthRecords] = await Promise.all([
@@ -125,7 +125,7 @@ function _renderStatsTab(container, from, to) {
 }
 
 function _renderRecordsTab(container, from, to) {
-  const filtered = _filteredRecords(from, to).slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+  const filtered = _filteredRecords(from, to).slice().sort((a, b) => new Date(a.date) - new Date(b.date));
   const totalCost = filtered.reduce((s, h) => s + Number(h.cost || 0), 0);
 
   const rows = filtered.map(h => ({

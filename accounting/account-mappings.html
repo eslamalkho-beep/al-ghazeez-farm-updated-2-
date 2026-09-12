@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ربط العمليات بالحسابات | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2>ربط العمليات بالحسابات</h2>
+        </div>
+        <p style="color: var(--color-text-secondary); font-size: 13px; margin-top: calc(-1 * var(--spacing-2)); margin-bottom: var(--spacing-3);">
+          كل عملية في النظام (مصروف/إيراد/مشترى/عهد/جملة/أصول ثابتة/تسويات...) تُرحَّل تلقائيًا على حساب محدد من شجرة الحسابات.
+          هذه الشاشة تعرض كل نقطة ترحيل مع حسابها الحالي، ويمكن تغيير أي حساب من القائمة — يُحفظ فورًا ويُطبق على القيود الجديدة
+          (القيود القديمة لا تتأثر). اختيار الحساب الافتراضي نفسه أو ترك الاختيار فارغًا يُعيد الربط للافتراضي.
+        </p>
+
+        
+
+        <div id="mappings-content"></div>
+
+        <div class="card" style="margin-bottom: var(--spacing-3);">
+          <div class="card__header"><h3>تكويد تفصيلي لكل بند — مصروفات ومشتريات</h3></div>
+          <p style="font-size:12px; color: var(--color-text-secondary); padding: 0 var(--spacing-3); margin-top: calc(-1 * var(--spacing-2));">
+            لكل بند تحدد: حساب المخزون المرتبط به (إن حُدِّد يُرسمَل المشترى على المخزون بدل المصروف)، وحساب الدفع لكل طريقة
+            (نقدي/تحويل/آجل) — فارغ = استخدام الربط العام في الأقسام أعلاه.
+          </p>
+          <div id="category-mappings-expense" style="padding: 0 var(--spacing-3) var(--spacing-3);"></div>
+        </div>
+
+        <div class="card" style="margin-bottom: var(--spacing-3);">
+          <div class="card__header"><h3>تكويد تفصيلي لكل بند — إيرادات</h3></div>
+          <p style="font-size:12px; color: var(--color-text-secondary); padding: 0 var(--spacing-3); margin-top: calc(-1 * var(--spacing-2));">
+            لكل بند إيراد تحدد حساب التحصيل لكل طريقة (نقدي/تحويل/آجل) — الآجل يمكن ربطه بحساب "العملاء - السوق" أو
+            "العملاء - الأفراد" حسب طبيعة البيع — فارغ = استخدام الربط العام.
+          </p>
+          <div id="category-mappings-revenue" style="padding: 0 var(--spacing-3) var(--spacing-3);"></div>
+        </div>
+
+        <div class="card">
+          <div class="card__header"><h3>حسابات الأطراف (ذمم مخصصة لكل عميل/مورّد)</h3></div>
+          <p style="font-size:12px; color: var(--color-text-secondary); padding: 0 var(--spacing-3); margin-top: calc(-1 * var(--spacing-2));">
+            حدد حساب الذمم لكل طرف مسجّل — يسري على فواتيره الآجلة وسنداته بدل الحساب العام (فارغ = العام).
+          </p>
+          <div id="party-mappings" style="padding: 0 var(--spacing-3) var(--spacing-3);"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div id="modal-root"></div>
+
+  <script src="../js/db/db.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/services/account-mapping-service.js"></script>
+  <script src="../js/services/party-service.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/quick-action-fab.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/pages/account-mappings-page.js"></script>
+</body>
+</html>

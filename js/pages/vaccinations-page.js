@@ -6,7 +6,7 @@ let _vaccinationFilterAnimalId = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth('herd');
-  renderSidebar('herd');
+  renderSidebar('herd-vaccinations');
   renderHeader('سجل التحصينات');
 
   const params = new URLSearchParams(window.location.search);
@@ -48,7 +48,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   await _refreshVaccinationTable();
-  await _checkUpcomingVaccinationNotifications();
 });
 
 const _vaccinationExportColumns = [
@@ -56,6 +55,7 @@ const _vaccinationExportColumns = [
   { key: 'animalCode', label: 'كود الحيوان' },
   { key: 'vaccineName', label: 'نوع اللقاح' },
   { key: 'nextDueDateLabel', label: 'الجرعة القادمة' },
+  { key: 'costLabel', label: 'التكلفة' },
   { key: 'notes', label: 'ملاحظات' },
 ];
 let _vaccinationExportRows = [];
@@ -67,6 +67,7 @@ async function _handleSubmit(e) {
   const date = document.getElementById('date').value;
   const vaccineName = document.getElementById('vaccineName').value.trim();
   const nextDueDate = document.getElementById('nextDueDate').value;
+  const cost = document.getElementById('cost').value;
 
   const isValid = validateForm([
     { fieldId: 'animalId', validatorFn: isRequired, message: 'يرجى اختيار الحيوان' },
@@ -80,6 +81,7 @@ async function _handleSubmit(e) {
     vaccineName,
     date,
     nextDueDate: nextDueDate || null,
+    cost: cost ? Number(cost) : null,
     notes: document.getElementById('notes').value.trim(),
   };
 
@@ -92,6 +94,7 @@ async function _handleSubmit(e) {
     showToast('تم تسجيل التحصين بنجاح', 'success');
     document.getElementById('vaccination-form').reset();
     document.getElementById('date').value = todayIso();
+    document.getElementById('cost').value = '';
     if (_vaccinationFilterAnimalId) document.getElementById('animalId').value = String(_vaccinationFilterAnimalId);
     await _refreshVaccinationTable();
   } catch (err) {
@@ -121,57 +124,30 @@ async function _refreshVaccinationTable() {
         dateLabel: formatDateArabic(v.date),
         animalCode: animal ? animal.code : '-',
         nextDueDateLabel: v.nextDueDate ? formatDateArabic(v.nextDueDate) : '-',
+        costLabel: v.cost ? formatCurrency(v.cost) : '-',
       };
     });
 
   _vaccinationExportRows = rows;
+
+  const totalCost = records.reduce((sum, v) => sum + (Number(v.cost) || 0), 0);
 
   renderDataTable('vaccination-table', [
     { key: 'dateLabel', label: 'تاريخ الجرعة', sortable: true },
     { key: 'animalCode', label: 'كود الحيوان', sortable: false },
     { key: 'vaccineName', label: 'نوع اللقاح', sortable: false },
     { key: 'nextDueDateLabel', label: 'الجرعة القادمة', sortable: true },
+    { key: 'costLabel', label: 'التكلفة', sortable: false },
     { key: 'notes', label: 'ملاحظات', sortable: false },
   ], rows, {
     onRowClick: (row) => _openVaccinationEditModal(row.id),
     emptyMessage: 'لا توجد سجلات تحصين بعد',
+    footerRow: {
+      dateLabel: 'الإجمالي', animalCode: '', vaccineName: '', nextDueDateLabel: '',
+      costLabel: formatCurrency(totalCost),
+      notes: '',
+    },
   });
-}
-
-// ينشئ إشعار type: 'vaccination' لكل تحصين موعد جرعته القادمة خلال 7 أيام (أو تجاوزه فعلًا) ولحيوان لا يزال
-// حيًا، ولا يُعاد التنبيه إن وُجد إشعار غير مقروء بالفعل لنفس سجل التحصين — بنفس مبدأ _checkStaleCustodyNotifications
-// في custody-list-page.js (فحص عند كل تحميل للصفحة بدل جدولة خلفية، مناسب لتطبيق محلي بلا خادم)
-async function _checkUpcomingVaccinationNotifications() {
-  const DUE_SOON_MS = 7 * 24 * 60 * 60 * 1000;
-  const now = Date.now();
-  const allAnimals = await getAllAnimals();
-
-  const dueSoonItems = _allVaccinationsCache.filter(v => {
-    if (!v.nextDueDate) return false;
-    const animal = allAnimals.find(a => a.id === v.animalId);
-    if (!animal || animal.status !== 'alive') return false;
-    return new Date(v.nextDueDate).getTime() - now <= DUE_SOON_MS;
-  });
-  if (!dueSoonItems.length) return;
-
-  const existingNotifs = await getAllNotifications();
-  const alreadyNotifiedIds = new Set(
-    existingNotifs
-      .filter(n => n.type === 'vaccination' && !n.isRead)
-      .map(n => n.relatedEntityId)
-  );
-
-  for (const item of dueSoonItems) {
-    if (alreadyNotifiedIds.has(item.id)) continue;
-    const animal = allAnimals.find(a => a.id === item.animalId);
-    const isOverdue = new Date(item.nextDueDate).getTime() < now;
-    await createNotification({
-      type: 'vaccination',
-      title: isOverdue ? 'جرعة تحصين متأخرة' : 'موعد تحصين قادم',
-      message: `الحيوان ${animal ? animal.code : ''} — لقاح "${item.vaccineName}" ${isOverdue ? 'تجاوز موعده بتاريخ' : 'مستحق بتاريخ'} ${formatDateArabic(item.nextDueDate)}`,
-      relatedEntityId: item.id,
-    });
-  }
 }
 
 function _openVaccinationEditModal(id) {
@@ -198,6 +174,10 @@ function _openVaccinationEditModal(id) {
         <label>تاريخ الجرعة القادمة</label>
         <input type="date" id="e-nextDueDate" class="form-control" value="${record.nextDueDate || ''}" />
       </div>
+      <div class="form-group">
+        <label>التكلفة (اختياري)</label>
+        <input type="number" id="e-cost" class="form-control" min="0" step="0.01" value="${record.cost != null ? record.cost : ''}" />
+      </div>
       <div class="form-group form-group--full">
         <label>ملاحظات</label>
         <input type="text" id="e-notes" class="form-control" value="${record.notes || ''}" />
@@ -220,10 +200,13 @@ function _openVaccinationEditModal(id) {
         return;
       }
 
+      const costValue = document.getElementById('e-cost').value;
+
       await updateVaccination(record.id, {
         vaccineName,
         date,
         nextDueDate: document.getElementById('e-nextDueDate').value || null,
+        cost: costValue ? Number(costValue) : null,
         notes: document.getElementById('e-notes').value.trim(),
       });
 

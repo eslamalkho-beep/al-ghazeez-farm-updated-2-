@@ -6,7 +6,7 @@ let _healthFilterAnimalId = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth('herd');
-  renderSidebar('herd');
+  renderSidebar('herd-health');
   renderHeader('السجل الصحي');
 
   const params = new URLSearchParams(window.location.search);

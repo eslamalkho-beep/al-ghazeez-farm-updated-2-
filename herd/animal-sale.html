@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>بيع حيوان | مزرعة الغزيز</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+  <style>
+    .purchase-type-grid { display:grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-4); }
+    @media (max-width: 900px) { .purchase-type-grid { grid-template-columns: 1fr; } }
+    .purchase-type-card {
+      display:block; text-align:right; padding: var(--spacing-5); border-radius: var(--radius-lg, 12px);
+      border: 2px solid var(--color-border); background: var(--color-surface); transition: border-color .15s, transform .15s;
+    }
+    .purchase-type-card:hover { border-color: var(--color-primary-green); transform: translateY(-2px); }
+    .purchase-type-card__icon { font-size: 36px; line-height:1; margin-bottom: var(--spacing-2); }
+    .purchase-type-card__title { font-size: 17px; font-weight: 800; margin-bottom: var(--spacing-2); color: var(--color-text-primary); }
+    .purchase-type-card__desc { font-size: 13px; color: var(--color-text-secondary); line-height:1.8; }
+    .purchase-type-card__desc ul { margin: var(--spacing-2) 0 0; padding-inline-start: 18px; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2>بيع حيوان</h2>
+          <a href="herd-list.html" class="btn btn--outline">→ العودة لسجل القطيع</a>
+        </div>
+
+        <p style="font-size:13px; color:var(--color-text-secondary); margin-bottom: var(--spacing-4);">
+          اختر نوع البيع أولًا، وسيوجّهك النظام تلقائيًا للنموذج المناسب. لا يوجد قرار نهائي — يمكنك لاحقًا
+          <a href="../bulk/transfer.html">تحويل أي حيوان بين القطيع ومخزون التجارة</a> في أي وقت.
+        </p>
+
+        <div class="purchase-type-grid">
+          <a class="purchase-type-card" href="../revenues/revenue-form.html?categoryCode=41101">
+            <div class="purchase-type-card__icon">🐑</div>
+            <div class="purchase-type-card__title">بيع أصل (من القطيع)</div>
+            <div class="purchase-type-card__desc">
+              يبيع حيوانًا مُكوَّدًا بالفعل في القطيع — يُسجَّل كإيراد "بيع حيوان" ويُحدَّث تلقائيًا لحالة "مباع".
+              <ul>
+                <li>اختيار الحيوان بكوده من القطيع الحي</li>
+                <li>مبلغ البيع، العميل، طريقة الاستلام</li>
+              </ul>
+            </div>
+          </a>
+
+          <a class="purchase-type-card" href="../bulk/bulk-sale-form.html">
+            <div class="purchase-type-card__icon">📦</div>
+            <div class="purchase-type-card__title">بيع تجارة (بالكمية)</div>
+            <div class="purchase-type-card__desc">
+              يبيع بالكمية من مخزون التجارة (بدون تكويد فردي) — إدخال أسرع للبيع السريع.
+              <ul>
+                <li>سجّل عملية بيع جديدة</li>
+                <li>النوع، الجنس، السلالة، العدد، سعر الوحدة</li>
+              </ul>
+            </div>
+          </a>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="modal-root"></div>
+
+  <script src="../js/db/db.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/quick-action-fab.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/pages/animal-sale-page.js"></script>
+</body>
+</html>

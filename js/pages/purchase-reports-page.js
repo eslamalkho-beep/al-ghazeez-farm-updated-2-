@@ -5,14 +5,23 @@ let _purchaseCategoriesForReport = [];
 let _reportMode = 'period';
 let _currentExportColumns = null;
 let _currentExportRows = null;
+let _currentExportTitle = 'تقرير المشتريات حسب البند';
+// رقم القيد المحاسبي لكل مشترى — نفس نمط _entryNumberByJournalEntryIdForExpenseReport في expense-reports-page.js
+let _entryNumberByJournalEntryIdForPurchaseReport = new Map();
 
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth('reports');
-  renderSidebar('reports');
+  renderSidebar('reports-purchase');
   renderHeader('تقارير المشتريات');
 
-  _allPurchasesForReport = await getAllPurchases();
-  _purchaseCategoriesForReport = await getCategoryNames('purchase');
+  const [purchases, journalEntries] = await Promise.all([getAllPurchases(), getAllJournalEntries()]);
+  _allPurchasesForReport = purchases;
+  _entryNumberByJournalEntryIdForPurchaseReport = new Map(journalEntries.map(e => [e.id, e.entryNumber]));
+  // ⚠️ لا نستخدم getCategoryAccountNames('expense') هنا: ذلك المجمّع مشترك بين المصروفات والمشتريات معًا
+  // (نفس نوع الحساب 'expense' في ChartOfAccounts)، فيعرض بنودًا خاصة بالمصروفات ضمن فلتر تقارير المشتريات.
+  // بدلاً من ذلك نشتق القائمة من البنود المستخدمة فعليًا في سجلات المشتريات نفسها.
+  _purchaseCategoriesForReport = [...new Set(_allPurchasesForReport.map(p => p.category).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, 'ar'));
 
   const categoryOptionsHtml = _purchaseCategoriesForReport.map(c => `<option value="${c}">${c}</option>`).join('');
   document.getElementById('compare-category').innerHTML += categoryOptionsHtml;
@@ -30,12 +39,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   document.getElementById('export-excel-btn').addEventListener('click', () => {
-    const title = _reportMode === 'period' ? 'تقرير المشتريات حسب البند' : 'مقارنة المشتريات بين فترتين';
-    exportRowsToExcel(title, _currentExportColumns, _currentExportRows);
+    exportRowsToExcel(_currentExportTitle, _currentExportColumns, _currentExportRows);
   });
   document.getElementById('export-pdf-btn').addEventListener('click', () => {
-    const title = _reportMode === 'period' ? 'تقرير المشتريات حسب البند' : 'مقارنة المشتريات بين فترتين';
-    exportRowsToPdf(title, _currentExportColumns, _currentExportRows);
+    exportRowsToPdf(_currentExportTitle, _currentExportColumns, _currentExportRows);
   });
 
   _renderPurchaseReport();
@@ -59,6 +66,13 @@ function _renderPurchaseReport() {
     (!category || purchase.category === category) &&
     (!from || purchase.date >= from) && (!to || purchase.date <= to)
   );
+
+  // بند محدد بعينه: بدل جدول "مقارنة حسب البند" (بلا معنى لصف واحد) نعرض سجلاته التفصيلية مباشرة —
+  // نفس نمط _renderExpenseCategoryRecords في expense-reports-page.js
+  if (category) {
+    _renderPurchaseCategoryRecords(category, filtered, from, to);
+    return;
+  }
 
   const byCategory = {};
   filtered.forEach(purchase => {
@@ -91,7 +105,7 @@ function _renderPurchaseReport() {
       { value: formatCurrency(totalTax), label: 'إجمالي الضريبة (فواتير ضريبية)', tone: 'blue', icon: '🧮', href: buildQueryUrl(listBase, { from, to, category }) },
     ])}
     <div class="card" style="margin-bottom: var(--spacing-3);">
-      <div class="card__header"><h3>${category ? `تفاصيل بند: ${category}` : 'مقارنة المشتريات حسب البند'}</h3></div>
+      <div class="card__header"><h3>مقارنة المشتريات حسب البند</h3></div>
       <div class="chart-box"><canvas id="purchase-by-cat-chart"></canvas></div>
     </div>
     <div id="purchase-report-table"></div>
@@ -119,6 +133,7 @@ function _renderPurchaseReport() {
     taxLabel: formatCurrency(totalTax),
   } : null;
 
+  _currentExportTitle = 'تقرير المشتريات حسب البند';
   _currentExportColumns = columns;
   _currentExportRows = footerRow ? [...rows, footerRow] : rows;
 
@@ -126,6 +141,69 @@ function _renderPurchaseReport() {
     emptyMessage: 'لا توجد مشتريات مسجّلة خلال هذه الفترة',
     footerRow,
     onRowClick: (row) => { window.location.href = buildQueryUrl(listBase, { from, to, category: row.category }); },
+  });
+}
+
+// سجلات بند واحد بالتفصيل (التاريخ/البيان/المبلغ/رقم القيد) — تحل محل جدول "مقارنة حسب البند" (بلا معنى
+// لصف واحد فقط) عند اختيار بند معيّن من `period-category`؛ نسخة طبق الأصل من
+// _renderExpenseCategoryRecords في expense-reports-page.js
+function _renderPurchaseCategoryRecords(category, filtered, from, to) {
+  const total = filtered.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+  const totalTax = filtered.reduce((sum, p) => sum + Number(p.taxAmount || 0), 0);
+  const pendingCount = filtered.filter(p => p.status === 'pending').length;
+
+  const listBase = '../purchases/purchase-list.html';
+  const container = document.getElementById('report-content');
+  container.innerHTML = `
+    ${kpiGrid([
+      { value: formatCurrency(total), label: `إجمالي بند "${category}"`, tone: 'red', icon: '💸', href: buildQueryUrl(listBase, { from, to, category }) },
+      { value: formatNumber(filtered.length), label: 'عدد المعاملات', tone: 'blue', icon: '🧾', href: buildQueryUrl(listBase, { from, to, category }) },
+      { value: formatNumber(pendingCount), label: 'قيد الاعتماد', tone: 'red', icon: '⏳', href: buildQueryUrl(listBase, { from, to, category, status: 'pending' }) },
+      { value: formatCurrency(totalTax), label: 'إجمالي الضريبة', tone: 'blue', icon: '🧮', href: buildQueryUrl(listBase, { from, to, category }) },
+    ])}
+    <div class="overview-section-title" style="font-size:15px; font-weight:800; margin-bottom: var(--spacing-2);">سجلات بند "${category}"</div>
+    <div id="purchase-report-table"></div>
+  `;
+
+  const rows = [...filtered]
+    .sort((a, b) => (a.date < b.date ? -1 : 1))
+    .map(p => {
+      // البيان: ملاحظات المشترى إن وُجدت، وإلا المورّد، وإلا اسم البند نفسه كحد أدنى
+      const statementLabel = p.notes || p.vendor || category;
+      const entryNumber = p.journalEntryId ? (_entryNumberByJournalEntryIdForPurchaseReport.get(p.journalEntryId) || null) : null;
+      return {
+        id: p.id,
+        dateLabel: formatDateArabic(p.date),
+        statementLabel,
+        amountLabel: formatCurrency(p.amount),
+        entryNumberLink: entryNumber
+          ? `<a href="../accounting/journal-entry-form.html?id=${p.journalEntryId}" onclick="event.stopPropagation();">${entryNumber}</a>`
+          : '-',
+      };
+    });
+
+  const columns = [
+    { key: 'dateLabel', label: 'التاريخ', sortable: true },
+    { key: 'statementLabel', label: 'البيان', sortable: false },
+    { key: 'amountLabel', label: 'المبلغ', sortable: false },
+    { key: 'entryNumberLink', label: 'رقم القيد', sortable: false },
+  ];
+
+  const footerRow = rows.length ? {
+    dateLabel: 'الإجمالي',
+    statementLabel: '',
+    amountLabel: formatCurrency(total),
+    entryNumberLink: '',
+  } : null;
+
+  _currentExportTitle = `سجلات بند ${category}`;
+  _currentExportColumns = columns;
+  _currentExportRows = footerRow ? [...rows, footerRow] : rows;
+
+  renderDataTable('purchase-report-table', columns, rows, {
+    emptyMessage: 'لا توجد سجلات لهذا البند خلال هذه الفترة',
+    footerRow,
+    onRowClick: (row) => { window.location.href = `../purchases/purchase-form.html?id=${row.id}`; },
   });
 }
 
@@ -196,6 +274,7 @@ function _renderCompareReport() {
     diffLabel: `${diff >= 0 ? '+' : ''}${formatCurrency(diff)}`,
   } : null;
 
+  _currentExportTitle = 'مقارنة المشتريات بين فترتين';
   _currentExportColumns = columns;
   _currentExportRows = footerRow ? [...rows, footerRow] : rows;
 

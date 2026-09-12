@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>الجرد الحيواني | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2>🐑 الجرد الحيواني</h2>
+          <a href="herd-list.html" class="btn btn--outline">→ العودة لسجل القطيع</a>
+        </div>
+        <p style="color: var(--color-text-secondary); font-size: 13px; margin-top: calc(-1 * var(--spacing-2)); margin-bottom: var(--spacing-3);">
+          جرد نهاية السنة المالية لحيوانات القطيع الحية: عدّ الحيوانات الفعلي وتحديد قيمة تقديرية لكل حيوان وحالته
+          (موجود/مفقود). الجرد توثيقي بلا أثر محاسبي تلقائي — يُحفظ كمحضر قابل للعرض والطباعة والتصدير.
+        </p>
+
+        <div class="card" style="margin-bottom: var(--spacing-4);">
+          <div class="card__header"><h3>جلسة جرد جديدة</h3></div>
+          <form id="count-form">
+            <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; padding: 0 var(--spacing-3);">
+              <div class="form-group" style="margin:0;">
+                <label for="date">تاريخ الجرد <span class="required">*</span></label>
+                <input type="date" id="date" class="form-control" style="max-width:200px;" />
+              </div>
+              <div class="form-group" style="margin:0; flex:1; min-width:220px;">
+                <label for="session-notes">ملاحظات عامة</label>
+                <input type="text" id="session-notes" class="form-control" placeholder="مثال: جرد نهاية السنة المالية 2026" />
+              </div>
+            </div>
+
+            <div style="display:flex; gap: var(--spacing-2); align-items:flex-end; flex-wrap:wrap; padding: var(--spacing-3); border-bottom: 1px solid var(--color-border);">
+              <div class="form-group" style="margin:0;">
+                <label for="filter-type">النوع</label>
+                <select id="filter-type" class="form-control">
+                  <option value="">الكل</option>
+                  <option value="sheep">غنم</option>
+                  <option value="goat">ماعز</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label for="filter-breed">السلالة</label>
+                <select id="filter-breed" class="form-control">
+                  <option value="">الكل</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label for="filter-age-from">العمر من (شهر)</label>
+                <input type="number" id="filter-age-from" class="form-control" min="0" placeholder="—" style="max-width:110px;" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label for="filter-age-to">العمر إلى (شهر)</label>
+                <input type="number" id="filter-age-to" class="form-control" min="0" placeholder="—" style="max-width:110px;" />
+              </div>
+              <div class="form-group" style="margin:0; flex:1; min-width:180px;">
+                <label for="filter-animals">بحث</label>
+                <input type="text" id="filter-animals" class="form-control" placeholder="كود / سلالة / نوع" />
+              </div>
+            </div>
+
+            <div style="display:flex; gap: var(--spacing-2); align-items:flex-end; flex-wrap:wrap; padding: var(--spacing-3); background: var(--color-bg-subtle, #F7F9F7);">
+              <div class="form-group" style="margin:0;">
+                <label for="uniform-value">سعر تقديري موحد</label>
+                <input type="number" id="uniform-value" class="form-control" min="0" step="0.01" placeholder="مثال: 800" style="max-width:150px;" />
+              </div>
+              <button type="button" class="btn btn--success" id="apply-uniform-btn">تطبيق السعر على الفلترة</button>
+              <div class="form-group" style="margin:0;">
+                <label for="uniform-status">حالة موحدة</label>
+                <select id="uniform-status" class="form-control" style="max-width:130px;">
+                  <option value="">— اختر —</option>
+                  <option value="present">موجود</option>
+                  <option value="missing">مفقود</option>
+                </select>
+              </div>
+              <button type="button" class="btn btn--success" id="apply-status-btn">تطبيق الحالة على الفلترة</button>
+              <span id="bulk-hint" style="font-size:12px; color: var(--color-text-secondary);"></span>
+            </div>
+
+            <div id="count-lines-table" style="padding: 0 var(--spacing-3);"></div>
+
+            <div class="form-actions" style="padding: 0 var(--spacing-3) var(--spacing-3); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap: var(--spacing-3);">
+              <div id="count-summary" style="font-size:13px; color: var(--color-text-secondary);"></div>
+              <button type="submit" class="btn btn--success" id="save-btn">حفظ الجرد</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card__header"><h3>سجل جلسات الجرد السابقة</h3></div>
+          <div id="count-history-table"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div id="modal-root"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+  <script src="../js/db/db.js"></script>
+  <script src="../js/services/account-mapping-service.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/animal-service.js"></script>
+  <script src="../js/services/animal-count-service.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/quick-action-fab.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/components/data-table.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+  <script src="../js/components/export-utils.js"></script>
+  <script src="../js/pages/animal-count-page.js"></script>
+</body>
+</html>

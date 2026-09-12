@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تصفية عهدة | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2>تصفية عهدة</h2>
+          <a href="custody-list.html" class="btn btn--outline">→ العودة لسجل العهد</a>
+        </div>
+
+        <div class="card" id="picker-card" style="margin-bottom: var(--spacing-4);">
+          <div class="card__header"><h3>اختيار العهدة</h3></div>
+          <div class="form-grid">
+            <div class="form-group form-group--full" id="mode-group">
+              <label>نطاق التصفية</label>
+              <div style="display:flex; gap:var(--spacing-4); flex-wrap:wrap;">
+                <label style="display:flex; align-items:center; gap:6px; font-weight:normal;">
+                  <input type="radio" name="liquidate-mode" id="mode-single" value="single" checked /> عهدة واحدة محددة
+                </label>
+                <label style="display:flex; align-items:center; gap:6px; font-weight:normal;">
+                  <input type="radio" name="liquidate-mode" id="mode-aggregate" value="aggregate" /> إجمالي رصيد الموظف (نقدي فقط)
+                </label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="picker-employeeId">الموظف</label>
+              <select id="picker-employeeId" class="form-control"></select>
+            </div>
+            <div class="form-group" id="picker-custodyId-group">
+              <label for="picker-custodyId">العهدة</label>
+              <select id="picker-custodyId" class="form-control"></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="aggregate-balance-card" style="display:none; margin-bottom: var(--spacing-4);">
+          <div class="card__header"><h3>إجمالي رصيد الموظف النقدي</h3></div>
+          <div id="aggregate-balance-box" style="font-size:14px; line-height:2;"></div>
+        </div>
+
+        <div class="card" id="details-card" style="display:none;">
+          <div class="card__header"><h3 id="details-card-title">تفاصيل العهدة</h3></div>
+          <div id="custody-details-box" style="font-size:14px; line-height:2; margin-bottom: var(--spacing-3);"></div>
+
+          <form id="liquidate-form" class="form-grid" novalidate>
+            <div class="form-group">
+              <label for="l-date">التاريخ <span class="required">*</span></label>
+              <input type="date" id="l-date" class="form-control" />
+            </div>
+
+            <div class="form-group form-group--full" id="cash-section-title" style="border-top:1px solid var(--color-border); padding-top: var(--spacing-3); display:none;">
+              <label style="margin-bottom:6px;">أدخل ما ينطبق — فواتير معتمدة و/أو نقد مرتجع، معًا أو أحدهما فقط</label>
+            </div>
+            <div class="form-group" id="invoice-amount-group" style="display:none;">
+              <label for="l-invoiceAmount">فواتير معتمدة (مصروفات)</label>
+              <input type="number" id="l-invoiceAmount" class="form-control" min="0" step="0.01" value="0" />
+            </div>
+            <div class="form-group" id="invoice-category-group" style="display:none;">
+              <label for="l-expenseCategory">بند المصروف</label>
+              <select id="l-expenseCategory" class="form-control"></select>
+            </div>
+            <div class="form-group" id="cash-return-group" style="display:none;">
+              <label for="l-cashAmount">نقد مرتجع</label>
+              <input type="number" id="l-cashAmount" class="form-control" min="0" step="0.01" value="0" />
+            </div>
+
+            <div class="form-group" id="quantity-group" style="display:none;">
+              <label for="l-quantity">الكمية المرتجعة <span class="required">*</span></label>
+              <input type="number" id="l-quantity" class="form-control" min="0" step="1" />
+            </div>
+
+            <div class="form-group form-group--full" id="remaining-preview-group" style="display:none;">
+              <p>المتبقي بعد التصفية: <strong id="remaining-preview-label">0 ر.س</strong></p>
+            </div>
+
+            <div class="form-group form-group--full">
+              <label for="l-notes">ملاحظات</label>
+              <textarea id="l-notes" class="form-control" rows="2"></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn--success" id="save-liquidate-btn">تنفيذ التصفية</button>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div id="modal-root"></div>
+
+  <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/services/inventory-service.js"></script>
+  <script src="../js/services/expense-service.js"></script>
+  <script src="../js/services/custody-service.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/quick-action-fab.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/pages/custody-liquidate-page.js"></script>
+</body>
+</html>

@@ -1,17 +1,21 @@
 // js/pages/journal-entry-form-page.js
-// إنشاء/تعديل قيد يومية — سطور قابلة للتكرار (حساب + مدين + دائن)، بنفس أسلوب بنود bulk-batch-form-page.js
+// إنشاء/تعديل قيد يومية — سطور قابلة للتكرار (حساب + مدين + دائن)، بنفس أسلوب بنود bulk-purchase-form-page.js
 // يُمنع الحفظ إن لم يتطابق إجمالي المدين مع إجمالي الدائن (شرط القيد المزدوج الأساسي)
 
 let _editingEntryId = null;
 let _linesState = []; // { accountId, debit, credit, lineNote }
 let _accountsCache = [];
+let _originalEntryDate = null; // تاريخ القيد الأصلي قبل التعديل — لازم لفحص قفل الفترات المحاسبية عند التعديل/الحذف
+let _loadedEntryStatus = null; // 'draft'|'posted'|null (null = قيد جديد لم يُحفظ بعد)
 
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth('accounting');
-  renderSidebar('accounting');
+  renderSidebar('accounting-journal');
   renderHeader('قيد يومية');
 
-  _accountsCache = (await getAllAccounts()).sort((a, b) => (a.code || '').localeCompare(b.code || ''));
+  // القيد اليدوي يُرحَّل على حسابات "قابلة للترحيل" فقط (أوراق الشجرة) — الرؤوس التجميعية تُرحَّل عليها
+  // الأتمتة وحدها (انظر getPostableAccounts في accounting-service.js)
+  _accountsCache = await getPostableAccounts();
 
   const params = new URLSearchParams(window.location.search);
   const idParam = params.get('id');
@@ -39,7 +43,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('save-btn').addEventListener('click', _handleSave);
   document.getElementById('delete-btn').addEventListener('click', _handleDelete);
+  document.getElementById('post-btn').addEventListener('click', _handlePostEntry);
+  document.getElementById('revert-draft-btn').addEventListener('click', _handleRevertToDraft);
+
+  _renderStatusBanner();
 });
+
+// بانر حالة القيد أعلى الفورم + إظهار/إخفاء زري "ترحيل"/"إرجاع لمسودة" حسب status الحالي — قيد جديد لم
+// يُحفظ بعد (_loadedEntryStatus === null) بلا بانر ولا أزرار (سيُترحَّل فورًا عند الحفظ الأول، انظر _handleSave)
+function _renderStatusBanner() {
+  const banner = document.getElementById('status-banner');
+  const postBtn = document.getElementById('post-btn');
+  const revertBtn = document.getElementById('revert-draft-btn');
+
+  if (!_editingEntryId || !_loadedEntryStatus) {
+    banner.style.display = 'none';
+    postBtn.style.display = 'none';
+    revertBtn.style.display = 'none';
+    return;
+  }
+
+  const isDraft = _loadedEntryStatus === 'draft';
+  banner.style.display = 'block';
+  banner.className = `sc-status-banner ${isDraft ? 'sc-status-banner--draft' : 'sc-status-banner--approved'}`;
+  banner.textContent = isDraft
+    ? 'هذا القيد مسودة — لن يظهر في التقارير أو الأرصدة حتى تُرحِّله.'
+    : 'هذا القيد مُرحَّل ويؤثر فعليًا على الأرصدة والتقارير.';
+
+  postBtn.style.display = isDraft ? 'inline-flex' : 'none';
+  revertBtn.style.display = isDraft ? 'none' : 'inline-flex';
+}
 
 async function _loadEntryIntoForm(id) {
   const entry = await getJournalEntryById(id);
@@ -48,10 +81,21 @@ async function _loadEntryIntoForm(id) {
     window.location.href = 'journal-entries.html';
     return;
   }
+  // أي حساب في قيد موجود لكنه خارج قائمة "القابلة للترحيل" (رأس تُرحَّل عليه أتمتة مثل 112/211) يُضاف
+  // للقائمة مؤقتًا حتى يظهر مختارًا في السطر عند التعديل
+  const allAccounts = await getAllAccounts();
+  (entry.lines || []).forEach(line => {
+    const account = allAccounts.find(a => a.id === Number(line.accountId));
+    if (account && !_accountsCache.some(a => a.id === account.id)) _accountsCache.push(account);
+  });
+  _accountsCache.sort((a, b) => (a.code || '').localeCompare(b.code || ''));
+
   document.getElementById('entryNumber').value = entry.entryNumber || '';
   document.getElementById('date').value = entry.date || '';
   document.getElementById('description').value = entry.description || '';
   _linesState = (entry.lines || []).map(l => ({ ...l, debit: l.debit || '', credit: l.credit || '' }));
+  _originalEntryDate = entry.date || null;
+  _loadedEntryStatus = entry.status === 'draft' ? 'draft' : 'posted'; // غياب status = مُرحَّل ضمنيًا (قيود قديمة)
 }
 
 function _accountLabel(account) {
@@ -158,6 +202,10 @@ function _validateBeforeSave() {
 async function _handleSave() {
   if (!_validateBeforeSave()) return;
 
+  // قفل الفترات المحاسبية: يمنع الحفظ لو تاريخ القيد الأصلي (عند التعديل) أو التاريخ الجديد المُدخَل ضمن فترة مغلقة
+  if (_originalEntryDate && !(await guardPeriodOpenForSave(_originalEntryDate))) return;
+  if (!(await guardPeriodOpenForSave(document.getElementById('date').value))) return;
+
   const data = {
     entryNumber: document.getElementById('entryNumber').value,
     date: document.getElementById('date').value,
@@ -168,6 +216,10 @@ async function _handleSave() {
       credit: Number(l.credit || 0),
       lineNote: (l.lineNote || '').trim(),
     })),
+    // القيد اليدوي الجديد يترحّل فورًا كما كان دومًا (بعكس الترحيل التلقائي الذي يُنشئ مسودة افتراضيًا —
+    // انظر createJournalEntry في accounting-service.js). عند التعديل لا نرسل status فيُحافَظ عليه كما هو
+    // (dbUpdate يدمج الحقول فقط) — تعديل قيد مسودة يبقى مسودة، ومُرحَّل يبقى مُرحَّلاً
+    ...(!_editingEntryId ? { status: 'posted' } : {}),
   };
 
   const saveBtn = document.getElementById('save-btn');
@@ -189,10 +241,28 @@ async function _handleSave() {
   }
 }
 
-function _handleDelete() {
+async function _handleDelete() {
+  if (_originalEntryDate && !(await guardPeriodOpenForSave(_originalEntryDate))) return;
+
   confirmDelete('هل أنت متأكد من حذف هذا القيد؟', async () => {
     await deleteJournalEntry(_editingEntryId);
     showToast('تم حذف القيد', 'success');
     setTimeout(() => { window.location.href = 'journal-entries.html'; }, 400);
   });
+}
+
+async function _handlePostEntry() {
+  if (_originalEntryDate && !(await guardPeriodOpenForSave(_originalEntryDate))) return;
+  await postJournalEntry(_editingEntryId);
+  showToast('تم ترحيل القيد بنجاح', 'success');
+  _loadedEntryStatus = 'posted';
+  _renderStatusBanner();
+}
+
+async function _handleRevertToDraft() {
+  if (_originalEntryDate && !(await guardPeriodOpenForSave(_originalEntryDate))) return;
+  await revertJournalEntryToDraft(_editingEntryId);
+  showToast('تم إرجاع القيد لمسودة', 'success');
+  _loadedEntryStatus = 'draft';
+  _renderStatusBanner();
 }

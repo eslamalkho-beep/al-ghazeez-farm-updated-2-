@@ -6,7 +6,7 @@ let _deathsFilterAnimalId = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth('herd');
-  renderSidebar('herd');
+  renderSidebar('herd-deaths');
   renderHeader('سجل النفوق');
 
   _allAnimalsCache = await getAllAnimals();
@@ -86,6 +86,9 @@ async function _handleSubmit(e) {
     });
 
     showToast('تم تسجيل النفوق بنجاح', 'success');
+    // تحديث فوري لعداد جرس التنبيهات — النفوق ينقص عدد القطيع الحيّ (تنبيه "تغيّر عدد القطيع"، انظر
+    // alerts-service.js) بلا حاجة لانتظار زيارة صفحة أخرى تُعيد رسم الهيدر
+    if (typeof refreshAlertsBadge === 'function') refreshAlertsBadge();
     document.getElementById('death-form').reset();
     document.getElementById('deathDate').value = todayIso();
 

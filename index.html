@@ -4,6 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>تسجيل الدخول | مزرعة الغزيز</title>
+  <script>
+    // تطبيق الوضع (ليلي/نهاري) قبل أي رسم للصفحة تفاديًا لومضة الوضع الخاطئ —
+    // مفتاح localStorage['theme'] يحفظ اختيار المستخدم الصريح، وإلا يُتّبع تفضيل نظام التشغيل تلقائيًا.
+    (function () {
+      try {
+        var saved = localStorage.getItem('theme');
+        var theme = (saved === 'dark' || saved === 'light')
+          ? saved
+          : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {}
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/variables.css" />
@@ -102,6 +115,44 @@
       margin-bottom: var(--spacing-4);
     }
     .login-form .form-group { margin-bottom: var(--spacing-3); }
+    #username-group { position: relative; }
+    .username-suggestions {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      left: 0;
+      z-index: 5;
+      margin-top: 4px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.16);
+      max-height: 190px;
+      overflow-y: auto;
+      list-style: none;
+      padding: 4px;
+    }
+    .username-suggestions--show { display: block; }
+    .username-suggestions li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 13.5px;
+    }
+    .username-suggestions li:hover { background: var(--color-bg); }
+    .username-suggestions li .us-remove {
+      color: var(--color-text-secondary);
+      font-size: 12px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .username-suggestions li .us-remove:hover { background: rgba(214,54,46,0.14); color: var(--color-primary-red-dark); }
     .login-options {
       display: flex;
       align-items: center;
@@ -121,21 +172,85 @@
       font-size: 13px;
       margin-bottom: var(--spacing-3);
     }
+    .login-welcome-box {
+      display: none;
+      background: rgba(30,158,90,0.08);
+      color: var(--color-primary-green-dark);
+      border: 1px solid rgba(30,158,90,0.25);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-bottom: var(--spacing-3);
+      text-align: center;
+      font-weight: 700;
+    }
+
+    /* ===== الوضع الليلي — مقصور على صفحة الدخول فقط (لا تعديل على متغيرات css/variables.css المشتركة) ===== */
+    html[data-theme="dark"] {
+      --color-bg: #0F172A;
+      --color-surface: #1E293B;
+      --color-text-primary: #F1F5F9;
+      --color-text-secondary: #94A3B8;
+      --color-border: #334155;
+    }
+    html[data-theme="dark"] body {
+      background: linear-gradient(135deg, #0B2545, #0B3B27, #071A33);
+      background-size: 300% 300%;
+    }
+    html[data-theme="dark"] .login-card {
+      box-shadow: 0 20px 50px rgba(0,0,0,0.55);
+    }
+    html[data-theme="dark"] .login-error-box {
+      background: rgba(214,54,46,0.15);
+      border-color: rgba(214,54,46,0.4);
+      color: #FCA5A5;
+    }
+    html[data-theme="dark"] .login-welcome-box {
+      background: rgba(30,158,90,0.15);
+      border-color: rgba(30,158,90,0.4);
+      color: #86EFAC;
+    }
+
+    .theme-toggle-btn {
+      position: fixed;
+      top: var(--spacing-3);
+      inset-inline-start: var(--spacing-3);
+      z-index: 2;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      font-size: 19px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(6px);
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .theme-toggle-btn:hover { background: rgba(255,255,255,0.24); transform: scale(1.06); }
   </style>
 </head>
 <body>
+
+  <button type="button" class="theme-toggle-btn" id="theme-toggle-btn" aria-label="تبديل الوضع الليلي" title="تبديل الوضع الليلي">🌙</button>
 
   <div class="login-card">
     <div class="login-card__logo"><img src="assets/logo.png" alt="شعار مزرعة الغزيز" /></div>
     <h1 class="login-card__title">مزرعة الغزيز</h1>
     <p class="login-card__subtitle">نظام إدارة مزرعة الأغنام والماعز</p>
 
+    <div class="login-welcome-box" id="login-welcome-box"></div>
     <div class="login-error-box" id="login-error-box"></div>
 
     <form class="login-form" id="login-form" novalidate>
       <div class="form-group" id="username-group">
         <label for="username">اسم المستخدم <span class="required">*</span></label>
-        <input type="text" id="username" class="form-control" placeholder="أدخل اسم المستخدم" autocomplete="username" />
+        <input type="text" id="username" class="form-control" placeholder="أدخل اسم المستخدم" autocomplete="off" />
+        <ul class="username-suggestions" id="username-suggestions"></ul>
         <span class="form-error">هذا الحقل مطلوب</span>
       </div>
 
@@ -155,18 +270,36 @@
 
       <button type="submit" class="btn btn--success btn--block" id="login-submit-btn">تسجيل الدخول</button>
     </form>
+
+    <form class="login-form" id="twofa-form" novalidate style="display:none;">
+      <p style="text-align:center; font-size:13px; color:var(--color-text-secondary); margin-bottom:var(--spacing-3);">
+        افتح تطبيق المصادقة (Authenticator) على موبايلك وأدخل الكود المكوَّن من 6 أرقام
+      </p>
+      <div class="form-group" id="twofa-code-group">
+        <label for="twofa-code">كود التحقق <span class="required">*</span></label>
+        <input type="text" id="twofa-code" class="form-control" inputmode="text" autocomplete="one-time-code" maxlength="11" placeholder="000000" style="text-align:center; letter-spacing:6px; font-size:20px;" />
+        <span class="form-error">أدخل كود التحقق المكوَّن من 6 أرقام، أو رمزًا احتياطيًا</span>
+        <span style="font-size:12px; color:var(--color-text-secondary);">أو أدخل أحد الرموز الاحتياطية إن لم يعمل الكود</span>
+      </div>
+      <button type="submit" class="btn btn--success btn--block" id="twofa-submit-btn">تحقّق ودخول</button>
+      <button type="button" class="btn btn--outline btn--block" id="twofa-back-btn" style="margin-top:var(--spacing-2);">رجوع</button>
+      <p style="text-align:center; margin-top:var(--spacing-3);">
+        <a href="#" id="twofa-lost-device-link" style="font-size:12.5px; color:var(--color-primary-blue); font-weight:700;">فقدت جهازك أو تطبيق المصادقة لا يعمل؟</a>
+      </p>
+    </form>
   </div>
 
   <div id="modal-root"></div>
 
   <script src="js/db/db.js"></script>
+<script src="js/services/account-mapping-service.js"></script>
   <script src="js/services/bulk-batch-service.js"></script>
   <script src="js/services/accounting-service.js"></script>
-  <script src="js/services/category-service.js"></script>
   <script src="js/services/expense-service.js"></script>
   <script src="js/services/revenue-service.js"></script>
   <script src="js/services/purchase-service.js"></script>
   <script src="js/db/seed.js"></script>
+  <script src="js/services/totp-service.js"></script>
   <script src="js/services/auth-service.js"></script>
   <script src="js/utils/validators.js"></script>
   <script src="js/components/modal.js"></script>

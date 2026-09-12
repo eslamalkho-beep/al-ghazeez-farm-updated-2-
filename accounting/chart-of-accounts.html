@@ -21,13 +21,11 @@
           <h2>المحاسبة</h2>
           <button class="btn btn--success" id="add-account-btn">+ حساب جديد</button>
         </div>
+        <p style="color: var(--color-text-secondary); font-size: 13px; margin-top: calc(-1 * var(--spacing-2)); margin-bottom: var(--spacing-3);">
+          كل حساب من نوع "مصروفات"/"إيرادات" مُعلَّم "يظهر كبند" يظهر تلقائيًا كخيار عند تسجيل مصروف/إيراد/مشترى — لا حاجة لشاشة تكويدات منفصلة.
+        </p>
 
-        <div class="report-tabs">
-          <span class="report-tab active">شجرة الحسابات</span>
-          <a href="journal-entries.html" class="report-tab">القيود اليومية</a>
-          <a href="cash-transfer.html" class="report-tab">تحويل صندوق ↔ بنك</a>
-          <a href="../reports/accounting-reports.html" class="report-tab">التقارير المحاسبية</a>
-        </div>
+        
 
         <div class="card" style="margin-bottom: var(--spacing-3); display:flex; gap: var(--spacing-3); flex-wrap:wrap; align-items:center;">
           <select id="filter-type" class="form-control" style="max-width:200px;">
@@ -38,6 +36,11 @@
             <option value="revenue">إيرادات</option>
             <option value="expense">مصروفات</option>
           </select>
+          <select id="filter-statement" class="form-control" style="max-width:220px;">
+            <option value="">كل القوائم المالية</option>
+            <option value="balanceSheet">المركز المالي</option>
+            <option value="incomeStatement">قائمة الدخل</option>
+          </select>
         </div>
         <div id="accounts-table"></div>
       </main>
@@ -46,8 +49,8 @@
   <div id="modal-root"></div>
 
   <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
   <script src="../js/services/auth-service.js"></script>
-  <script src="../js/services/notification-service.js"></script>
   <script src="../js/services/accounting-service.js"></script>
   <script src="../js/utils/validators.js"></script>
   <script src="../js/utils/formatters.js"></script>

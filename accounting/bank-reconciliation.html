@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تسوية البنوك | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2>تسوية البنوك</h2>
+        </div>
+        <p style="color: var(--color-text-secondary); font-size: 13px; margin-top: calc(-1 * var(--spacing-2)); margin-bottom: var(--spacing-3);">
+          إدخال يدوي لحركات كشف البنك ومطابقتها مع حركات النظام على حساب البنك — لا يوجد رفع/تحليل ملف كشف حساب آليًا (انظر ملاحظة الحدود في CLAUDE.md).
+        </p>
+
+        
+
+        <div class="card" style="margin-bottom: var(--spacing-3); display:flex; gap: var(--spacing-3); flex-wrap:wrap; align-items:flex-end;">
+          <div class="form-group" style="margin:0;">
+            <label>من تاريخ</label>
+            <input type="date" id="filter-from" class="form-control" />
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label>إلى تاريخ</label>
+            <input type="date" id="filter-to" class="form-control" />
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label>الرصيد الختامي حسب كشف البنك (اختياري)</label>
+            <input type="number" id="statement-closing-balance" class="form-control" step="0.01" style="max-width:200px;" />
+          </div>
+        </div>
+
+        <div id="reconciliation-summary" style="margin-bottom: var(--spacing-4);"></div>
+
+        <div class="card" style="margin-bottom: var(--spacing-4);">
+          <div class="card__header"><h3>إضافة سطر كشف بنك</h3></div>
+          <form id="statement-line-form" class="form-grid" novalidate>
+            <div class="form-group">
+              <label for="sl-date">التاريخ <span class="required">*</span></label>
+              <input type="date" id="sl-date" class="form-control" />
+              <span class="form-error">التاريخ مطلوب</span>
+            </div>
+            <div class="form-group">
+              <label for="sl-direction">الاتجاه <span class="required">*</span></label>
+              <select id="sl-direction" class="form-control">
+                <option value="credit">إيداع (دخول للبنك)</option>
+                <option value="debit">سحب (خروج من البنك)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="sl-amount">المبلغ <span class="required">*</span></label>
+              <input type="number" id="sl-amount" class="form-control" min="0" step="0.01" />
+              <span class="form-error">أدخل مبلغًا صحيحًا</span>
+            </div>
+            <div class="form-group">
+              <label for="sl-reference">المرجع (اختياري)</label>
+              <input type="text" id="sl-reference" class="form-control" />
+            </div>
+            <div class="form-group form-group--full">
+              <label for="sl-description">البيان</label>
+              <input type="text" id="sl-description" class="form-control" />
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn--success" id="add-line-btn">+ إضافة السطر</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card__header" style="padding: 4px;"><h3>حركات كشف البنك</h3></div>
+        <div id="statement-lines-table" style="margin-bottom: var(--spacing-4);"></div>
+
+        <div class="card__header" style="padding: 4px;"><h3>حركات النظام (حساب البنك)</h3></div>
+        <div id="system-rows-table"></div>
+      </main>
+    </div>
+  </div>
+
+  <div id="modal-root"></div>
+
+  <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/services/bank-reconciliation-service.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/quick-action-fab.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/components/data-table.js"></script>
+  <script src="../js/components/kpi-bar.js"></script>
+  <script src="../js/pages/bank-reconciliation-page.js"></script>
+</body>
+</html>

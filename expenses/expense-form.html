@@ -76,7 +76,7 @@
             </div>
 
             <div class="form-group form-group--full" style="border-top:1px solid var(--color-border); padding-top: var(--spacing-3);">
-              <label>ربط بصنف مخزون (اختياري — يضيف الكمية تلقائيًا كحركة "وارد" في المخزون، مثل شراء أعلاف/أدوية)</label>
+              <label>ربط بصنف مخزون (اختياري — يسجّل الكمية تلقائيًا كحركة مخزون: "وارد" لشراء يزيد الرصيد، أو "صادر" لاستهلاك يُخصم من رصيد موجود بالفعل)</label>
             </div>
             <div class="form-group">
               <label for="linkedInventoryItemId">الصنف</label>
@@ -85,9 +85,35 @@
               </select>
             </div>
             <div class="form-group" id="linked-quantity-group" style="display:none;">
-              <label for="linkedQuantity">الكمية</label>
+              <label for="linkedInventoryDirection">نوع الحركة</label>
+              <select id="linkedInventoryDirection" class="form-control">
+                <option value="in">وارد (شراء يُضاف للمخزون)</option>
+                <option value="out">صادر (استهلاك يُخصم من المخزون)</option>
+              </select>
+              <label for="linkedQuantity" style="margin-top: var(--spacing-2);">الكمية</label>
               <input type="number" id="linkedQuantity" class="form-control" />
               <span class="form-error">أدخل كمية صحيحة</span>
+              <small id="linked-item-stock-hint" style="color: var(--color-text-secondary);"></small>
+            </div>
+
+            <div class="form-group form-group--full" style="border-top:1px solid var(--color-border); padding-top: var(--spacing-3);">
+              <label>ربط بدفعة تسمين (اختياري — لأي مصروف خاص بالدفعة كلها: علف، أدوية، فيتامينات... يُحسب نصيب كل حيوان من هذا المصروف تلقائيًا، انظر سجل التسمين ضمن إدارة القطيع)</label>
+            </div>
+            <div class="form-group">
+              <label for="linkedFatteningBatchId">الدفعة</label>
+              <select id="linkedFatteningBatchId" class="form-control">
+                <option value="">-- بدون ربط بدفعة تسمين --</option>
+              </select>
+            </div>
+
+            <div class="form-group form-group--full" style="border-top:1px solid var(--color-border); padding-top: var(--spacing-3);">
+              <label>ربط بحيوان (اختياري — تكلفة فردية مباشرة على حيوان بعينه فقط، مثل علاج/دواء خاص به لا يُشارك فيه باقي القطيع؛ مستقل تمامًا عن الربط بدفعة تسمين أعلاه ولا يُوزَّع على أي حيوان آخر)</label>
+            </div>
+            <div class="form-group">
+              <label for="linkedAnimalId">الحيوان</label>
+              <select id="linkedAnimalId" class="form-control">
+                <option value="">-- بدون ربط بحيوان --</option>
+              </select>
             </div>
 
             <div class="form-actions">
@@ -103,12 +129,14 @@
   <div id="modal-root"></div>
 
   <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
   <script src="../js/services/auth-service.js"></script>
-  <script src="../js/services/notification-service.js"></script>
   <script src="../js/services/expense-service.js"></script>
-  <script src="../js/services/category-service.js"></script>
   <script src="../js/services/inventory-service.js"></script>
+  <script src="../js/services/animal-service.js"></script>
+  <script src="../js/services/fattening-service.js"></script>
   <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/services/period-service.js"></script>
   <script src="../js/utils/validators.js"></script>
   <script src="../js/utils/formatters.js"></script>
   <script src="../js/components/sidebar.js"></script>

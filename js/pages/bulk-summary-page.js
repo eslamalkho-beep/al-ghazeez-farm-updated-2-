@@ -1,44 +1,19 @@
 // js/pages/bulk-summary-page.js
-// ملخّص أرصدة الجملة — عرض فقط، بلا CRUD
-// المتبقي = فرق تراكمي بسيط (إجمالي الشراء - إجمالي البيع) لكل تركيبة نوع/جنس/سلالة، مجمّع من بنود كل الدفعات
+// ملخّص أرصدة الجملة — عرض فقط، بلا CRUD. لكل تركيبة نوع/جنس/سلالة: إجمالي الشراء وتكلفته، متوسط تكلفة
+// متحرك، إجمالي البيع وإيراده وتكلفة بضاعته المباعة، الرصيد الحالي (المتبقي)، وإجمالي الربح — كل شيء محسوب
+// حيًا عبر computeBulkGroupBalances (bulk-batch-service.js)، وليس مخزَّنًا
 
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth('bulk');
-  renderSidebar('bulk');
+  renderSidebar('bulk-summary');
   renderHeader('ملخص الأرصدة الجماعية');
 
-  const batches = await getAllBulkBatches();
-  _drawBulkSummary(batches);
+  const [purchases, sales] = await Promise.all([getAllBulkPurchases(), getAllBulkSales()]);
+  _drawBulkSummary(purchases, sales);
 });
 
-function _bulkGroupKey(record) {
-  return `${record.type}|${record.gender}|${(record.breed || '').trim().toLowerCase()}`;
-}
-
-function _computeBulkSummary(batches) {
-  const groups = {};
-
-  batches.forEach(batch => {
-    (batch.purchaseLines || []).forEach(p => {
-      const key = _bulkGroupKey(p);
-      if (!groups[key]) groups[key] = { type: p.type, gender: p.gender, breed: p.breed, purchasedCount: 0, soldCount: 0 };
-      groups[key].purchasedCount += Number(p.count || 0);
-    });
-    (batch.saleLines || []).forEach(s => {
-      const key = _bulkGroupKey(s);
-      if (!groups[key]) groups[key] = { type: s.type, gender: s.gender, breed: s.breed, purchasedCount: 0, soldCount: 0 };
-      groups[key].soldCount += Number(s.count || 0);
-    });
-  });
-
-  return Object.values(groups).map(g => ({
-    ...g,
-    remainingCount: g.purchasedCount - g.soldCount,
-  }));
-}
-
-function _drawBulkSummary(batches) {
-  const groups = _computeBulkSummary(batches);
+function _drawBulkSummary(purchases, sales) {
+  const groups = computeBulkGroupBalances(purchases, sales);
 
   const rows = groups.map(g => {
     const isNegative = g.remainingCount < 0;
@@ -48,31 +23,52 @@ function _drawBulkSummary(batches) {
       genderLabel: ANIMAL_GENDER_LABELS[g.gender] || '-',
       breed: g.breed || '-',
       purchasedCountLabel: formatNumber(g.purchasedCount),
+      purchasedCostLabel: formatCurrency(g.purchasedCost),
+      avgCostLabel: formatCurrency(g.avgCost),
       soldCountLabel: formatNumber(g.soldCount),
+      soldRevenueLabel: formatCurrency(g.soldRevenue),
+      cogsLabel: formatCurrency(g.cogs),
       remainingCountLabel: isNegative
         ? `<strong style="color: var(--color-primary-red);">${formatNumber(g.remainingCount)}</strong>`
         : formatNumber(g.remainingCount),
+      grossProfitLabel: `<strong style="color: ${g.grossProfit >= 0 ? 'var(--color-primary-green-dark)' : 'var(--color-primary-red)'};">${formatCurrency(g.grossProfit)}</strong>`,
     };
   });
 
-  const totalPurchased = groups.reduce((s, g) => s + g.purchasedCount, 0);
-  const totalSold = groups.reduce((s, g) => s + g.soldCount, 0);
-  const totalRemaining = totalPurchased - totalSold;
+  const totals = groups.reduce((acc, g) => ({
+    purchasedCount: acc.purchasedCount + g.purchasedCount,
+    purchasedCost: acc.purchasedCost + g.purchasedCost,
+    soldCount: acc.soldCount + g.soldCount,
+    soldRevenue: acc.soldRevenue + g.soldRevenue,
+    cogs: acc.cogs + g.cogs,
+    remainingCount: acc.remainingCount + g.remainingCount,
+    grossProfit: acc.grossProfit + g.grossProfit,
+  }), { purchasedCount: 0, purchasedCost: 0, soldCount: 0, soldRevenue: 0, cogs: 0, remainingCount: 0, grossProfit: 0 });
 
   renderDataTable('bulk-summary-table', [
     { key: 'typeLabel', label: 'النوع', sortable: true },
     { key: 'genderLabel', label: 'الجنس', sortable: true },
     { key: 'breed', label: 'السلالة', sortable: true },
     { key: 'purchasedCountLabel', label: 'عدد الشراء', sortable: false },
+    { key: 'purchasedCostLabel', label: 'تكلفة الشراء', sortable: false },
+    { key: 'avgCostLabel', label: 'متوسط التكلفة', sortable: false },
     { key: 'soldCountLabel', label: 'عدد البيع', sortable: false },
-    { key: 'remainingCountLabel', label: 'المتبقي الحالي', sortable: false },
+    { key: 'soldRevenueLabel', label: 'إيراد البيع', sortable: false },
+    { key: 'cogsLabel', label: 'تكلفة البضاعة المباعة', sortable: false },
+    { key: 'remainingCountLabel', label: 'الرصيد الحالي', sortable: false },
+    { key: 'grossProfitLabel', label: 'إجمالي الربح', sortable: false },
   ], rows, {
     emptyMessage: 'لا توجد بيانات جماعية بعد لعرض الملخص',
     footerRow: {
       typeLabel: 'الإجمالي', genderLabel: '', breed: '',
-      purchasedCountLabel: formatNumber(totalPurchased),
-      soldCountLabel: formatNumber(totalSold),
-      remainingCountLabel: formatNumber(totalRemaining),
+      purchasedCountLabel: formatNumber(totals.purchasedCount),
+      purchasedCostLabel: formatCurrency(totals.purchasedCost),
+      avgCostLabel: '',
+      soldCountLabel: formatNumber(totals.soldCount),
+      soldRevenueLabel: formatCurrency(totals.soldRevenue),
+      cogsLabel: formatCurrency(totals.cogs),
+      remainingCountLabel: formatNumber(totals.remainingCount),
+      grossProfitLabel: formatCurrency(totals.grossProfit),
     },
   });
 }

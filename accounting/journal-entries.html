@@ -18,7 +18,7 @@
       <div id="header-container"></div>
       <main class="page-content">
         <div class="page-header">
-          <h2>القيود اليومية</h2>
+          <h2>القيود اليومية <span id="draft-count-badge"></span></h2>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button type="button" class="btn btn--outline" id="export-excel-btn">تصدير Excel</button>
             <button type="button" class="btn btn--outline" id="export-pdf-btn">تصدير PDF</button>
@@ -26,18 +26,19 @@
           </div>
         </div>
 
-        <div class="report-tabs">
-          <a href="chart-of-accounts.html" class="report-tab">شجرة الحسابات</a>
-          <span class="report-tab active">القيود اليومية</span>
-          <a href="cash-transfer.html" class="report-tab">تحويل صندوق ↔ بنك</a>
-          <a href="../reports/accounting-reports.html" class="report-tab">التقارير المحاسبية</a>
-        </div>
+
 
         <div class="card" style="margin-bottom: var(--spacing-3); display:flex; gap: var(--spacing-3); flex-wrap:wrap; align-items:center;">
           <input type="date" id="filter-from" class="form-control" style="max-width:170px;" />
           <span style="color: var(--color-text-secondary); font-size:13px;">إلى</span>
           <input type="date" id="filter-to" class="form-control" style="max-width:170px;" />
+          <select id="filter-status" class="form-control" style="max-width:150px;">
+            <option value="">كل الحالات</option>
+            <option value="draft">مسودة</option>
+            <option value="posted">مُرحَّل</option>
+          </select>
           <button class="btn btn--outline" id="clear-filters-btn">مسح الفلاتر</button>
+          <button type="button" class="btn btn--success" id="post-all-btn" style="margin-right:auto;">ترحيل كل المسودات</button>
         </div>
         <div id="entries-table"></div>
       </main>
@@ -45,11 +46,12 @@
   </div>
   <div id="modal-root"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
   <script src="../js/services/auth-service.js"></script>
-  <script src="../js/services/notification-service.js"></script>
   <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/services/period-service.js"></script>
   <script src="../js/utils/formatters.js"></script>
   <script src="../js/components/sidebar.js"></script>
   <script src="../js/components/quick-action-fab.js"></script>
@@ -57,6 +59,8 @@
   <script src="../js/components/modal.js"></script>
   <script src="../js/components/toast.js"></script>
   <script src="../js/components/data-table.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
   <script src="../js/components/export-utils.js"></script>
   <script src="../js/pages/journal-entry-list-page.js"></script>
 </body>

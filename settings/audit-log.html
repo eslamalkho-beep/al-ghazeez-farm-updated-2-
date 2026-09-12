@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>سجل التدقيق | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2>سجل التدقيق</h2>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <a href="settings.html" class="btn btn--outline">→ الإعدادات</a>
+          </div>
+        </div>
+
+        <p id="not-admin-notice" style="display:none; color: var(--color-text-secondary);">سجل التدقيق مقصور على مدير النظام.</p>
+
+        <div id="audit-content">
+          <div class="card" id="filters-card" style="margin-bottom: var(--spacing-3); display:flex; gap: var(--spacing-3); flex-wrap:wrap; align-items:flex-end;">
+            <div class="form-group" style="margin:0;">
+              <label>نوع السجل</label>
+              <select id="filter-store" class="form-control" style="min-width:180px;">
+                <option value="">الكل</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label>الإجراء</label>
+              <select id="filter-action" class="form-control" style="min-width:140px;">
+                <option value="">الكل</option>
+                <option value="create">إنشاء</option>
+                <option value="update">تعديل</option>
+                <option value="delete">حذف (ناعم)</option>
+                <option value="hardDelete">حذف نهائي</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label>المستخدم</label>
+              <select id="filter-user" class="form-control" style="min-width:160px;">
+                <option value="">الكل</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label>من تاريخ</label>
+              <input type="date" id="filter-from" class="form-control" />
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label>إلى تاريخ</label>
+              <input type="date" id="filter-to" class="form-control" />
+            </div>
+            <button type="button" class="btn btn--outline" id="clear-filters-btn">مسح الفلاتر</button>
+          </div>
+
+          <div id="audit-table"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div id="modal-root"></div>
+
+  <script src="../js/db/db.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/audit-service.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/quick-action-fab.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/components/data-table.js"></script>
+  <script src="../js/pages/audit-log-page.js"></script>
+</body>
+</html>

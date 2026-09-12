@@ -33,25 +33,14 @@
         </div>
 
         <div class="report-tabs">
-          <span class="report-tab active">تقارير القطيع</span>
-          <a href="health-reports.html" class="report-tab">تقارير السجل الصحي</a>
-          <a href="revenue-reports.html" class="report-tab">تقارير الإيرادات</a>
-          <a href="sales-report.html" class="report-tab">المبيعات وتكلفة الرأس</a>
-          <a href="expense-reports.html" class="report-tab">تقارير المصروفات</a>
-          <a href="purchase-reports.html" class="report-tab">تقارير المشتريات</a>
-          <a href="party-reports.html" class="report-tab">العملاء والموردون</a>
-          <a href="inventory-reports.html" class="report-tab">المخزون</a>
-          <a href="accounting-reports.html" class="report-tab">المحاسبة</a>
-          <a href="overview-report.html" class="report-tab">التقرير الشامل</a>
-        </div>
-
-        <div class="report-tabs">
           <button class="report-tab active" data-tab="stats">إحصائيات القطيع</button>
           <button class="report-tab" data-tab="births">المواليد خلال فترة</button>
           <button class="report-tab" data-tab="byMother">المواليد حسب الأم</button>
           <button class="report-tab" data-tab="deaths">النفوق خلال فترة</button>
           <button class="report-tab" data-tab="byType">حسب النوع</button>
           <button class="report-tab" data-tab="byBreed">حسب السلالة</button>
+          <button class="report-tab" data-tab="mating">التلقيح خلال فترة</button>
+          <button class="report-tab" data-tab="pregnancy">الحمل خلال فترة</button>
         </div>
 
         <div class="report-filters">
@@ -59,6 +48,10 @@
           <input type="date" id="report-from" class="form-control" style="max-width:170px;" />
           <label style="font-size:13px; color:var(--color-text-secondary);">إلى</label>
           <input type="date" id="report-to" class="form-control" style="max-width:170px;" />
+          <label id="report-animal-label" style="font-size:13px; color:var(--color-text-secondary); display:none;">الحيوان</label>
+          <select id="report-animal-filter" class="form-control" style="max-width:220px; display:none;">
+            <option value="">كل الإناث</option>
+          </select>
         </div>
 
         <div id="report-content"></div>
@@ -68,13 +61,14 @@
   <div id="modal-root"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <script src="../js/db/db.js"></script>
   <script src="../js/services/auth-service.js"></script>
-  <script src="../js/services/notification-service.js"></script>
   <script src="../js/services/animal-service.js"></script>
   <script src="../js/services/birth-service.js"></script>
   <script src="../js/services/death-service.js"></script>
+  <script src="../js/services/mating-service.js"></script>
+  <script src="../js/services/pregnancy-service.js"></script>
   <script src="../js/utils/formatters.js"></script>
   <script src="../js/components/sidebar.js"></script>
   <script src="../js/components/quick-action-fab.js"></script>
@@ -83,6 +77,8 @@
   <script src="../js/components/toast.js"></script>
   <script src="../js/components/data-table.js"></script>
   <script src="../js/components/chart-renderer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
   <script src="../js/components/export-utils.js"></script>
   <script src="../js/components/kpi-bar.js"></script>
   <script src="../js/pages/herd-reports-page.js"></script>

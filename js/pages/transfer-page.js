@@ -1,25 +1,20 @@
 // js/pages/transfer-page.js
 
 let _tAnimals = [];
-let _tBatches = [];
+let _tPurchases = [];
+let _tSales = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth('bulk');
-  renderSidebar('bulk');
+  renderSidebar('bulk-transfer');
   renderHeader('تحويل قطيع ↔ تجارة');
 
-  [_tAnimals, _tBatches] = await Promise.all([getAllAnimals(), getAllBulkBatches()]);
+  [_tAnimals, _tPurchases, _tSales] = await Promise.all([getAllAnimals(), getAllBulkPurchases(), getAllBulkSales()]);
 
   const aliveAnimals = _tAnimals.filter(a => a.status === 'alive');
   document.getElementById('tt-animalId').innerHTML = aliveAnimals.length
     ? aliveAnimals.map(a => `<option value="${a.id}">${a.code} — ${ANIMAL_TYPE_LABELS[a.type] || a.type} (${a.breed})</option>`).join('')
     : `<option value="">لا توجد حيوانات حية متاحة</option>`;
-
-  const batchOptions = _tBatches.length
-    ? _tBatches.map(b => `<option value="${b.id}">${b.code}</option>`).join('')
-    : `<option value="">لا توجد دفعات — أنشئ دفعة أولاً</option>`;
-  document.getElementById('tt-batchId').innerHTML = batchOptions;
-  document.getElementById('th-batchId').innerHTML = batchOptions;
 
   document.getElementById('tt-date').value = todayIso();
   document.getElementById('th-date').value = todayIso();
@@ -34,12 +29,10 @@ async function _handleToTrade(e) {
   e.preventDefault();
 
   const animalId = document.getElementById('tt-animalId').value;
-  const batchId = document.getElementById('tt-batchId').value;
   const date = document.getElementById('tt-date').value;
 
   const isValid = validateForm([
     { fieldId: 'tt-animalId', validatorFn: isRequired, message: 'يرجى اختيار حيوان' },
-    { fieldId: 'tt-batchId', validatorFn: isRequired, message: 'يرجى اختيار دفعة' },
     { fieldId: 'tt-date', validatorFn: isValidDate, message: 'التاريخ مطلوب' },
   ]);
   if (!isValid) return;
@@ -51,7 +44,6 @@ async function _handleToTrade(e) {
   try {
     await transferAnimalToTrade({
       animalId: Number(animalId),
-      batchId: Number(batchId),
       date,
       valuation: document.getElementById('tt-valuation').value ? Number(document.getElementById('tt-valuation').value) : null,
       notes: document.getElementById('tt-notes').value.trim(),
@@ -68,12 +60,10 @@ async function _handleToTrade(e) {
 async function _handleToHerd(e) {
   e.preventDefault();
 
-  const batchId = document.getElementById('th-batchId').value;
   const breed = document.getElementById('th-breed').value.trim();
   const date = document.getElementById('th-date').value;
 
   const isValid = validateForm([
-    { fieldId: 'th-batchId', validatorFn: isRequired, message: 'يرجى اختيار دفعة' },
     { fieldId: 'th-breed', validatorFn: isRequired, message: 'السلالة مطلوبة' },
     { fieldId: 'th-date', validatorFn: isValidDate, message: 'التاريخ مطلوب' },
   ]);
@@ -85,7 +75,6 @@ async function _handleToHerd(e) {
 
   try {
     await transferTradeToAnimal({
-      batchId: Number(batchId),
       type: document.getElementById('th-type').value,
       gender: document.getElementById('th-gender').value,
       breed,
@@ -109,12 +98,14 @@ async function _refreshTransferLog() {
     .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
     .map(t => {
       const animal = _tAnimals.find(a => a.id === t.animalId);
-      const batch = _tBatches.find(b => b.id === t.batchId);
+      const record = t.kind === 'herdToTrade'
+        ? _tPurchases.find(p => p.id === t.bulkRecordId)
+        : _tSales.find(s => s.id === t.bulkRecordId);
       return {
         dateLabel: formatDateArabic(t.date),
         kindLabel: t.kind === 'herdToTrade' ? 'قطيع → تجارة' : 'تجارة → قطيع',
         animalCode: animal ? animal.code : '-',
-        batchCode: batch ? batch.code : '-',
+        recordCode: record ? record.code : '-',
         valuationLabel: t.valuation ? formatCurrency(t.valuation) : '-',
         notes: t.notes || '-',
       };
@@ -124,7 +115,7 @@ async function _refreshTransferLog() {
     { key: 'dateLabel', label: 'التاريخ', sortable: true },
     { key: 'kindLabel', label: 'الاتجاه', sortable: false },
     { key: 'animalCode', label: 'الحيوان', sortable: false },
-    { key: 'batchCode', label: 'الدفعة', sortable: false },
+    { key: 'recordCode', label: 'عملية الشراء/البيع', sortable: false },
     { key: 'valuationLabel', label: 'القيمة التقديرية', sortable: false },
     { key: 'notes', label: 'ملاحظات', sortable: false },
   ], rows, {

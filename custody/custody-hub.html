@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>إدارة العهد | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2>إدارة العهد</h2>
+        </div>
+
+        <div class="card" id="custody-alerts-card" style="margin-bottom: var(--spacing-4); display:none;">
+          <div class="card__header"><h3>⚠️ تنبيهات العهد</h3></div>
+          <div id="custody-alerts-list"></div>
+        </div>
+
+        <div class="card" style="margin-bottom: var(--spacing-4);">
+          <div class="card__header">
+            <h3>ملخّص سريع</h3>
+          </div>
+          <div class="kpi-grid" id="custody-hub-kpis"></div>
+        </div>
+
+        <div class="card__header" style="padding: 4px;"><h3>العمليات</h3></div>
+        <div class="kpi-grid" id="custody-hub-menu" style="grid-template-columns: repeat(3, 1fr);"></div>
+
+        <div class="card" style="margin-top: var(--spacing-4);">
+          <div class="card__header">
+            <h3>حد التنبيه المالي للعهدة الواحدة</h3>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <input type="number" id="alert-threshold-input" class="form-control" style="max-width:220px;" min="0" step="1" placeholder="بلا حد" />
+            <button type="button" class="btn btn--outline" id="save-threshold-btn">حفظ</button>
+            <span style="font-size:12px; color: var(--color-text-secondary);">أي عهدة مفتوحة يتجاوز رصيدها المتبقي هذا المبلغ يُنشأ لها تنبيه تلقائي.</span>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div id="modal-root"></div>
+
+  <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/services/inventory-service.js"></script>
+  <script src="../js/services/expense-service.js"></script>
+  <script src="../js/services/custody-service.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/quick-action-fab.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/components/kpi-bar.js"></script>
+  <script src="../js/pages/custody-hub-page.js"></script>
+</body>
+</html>

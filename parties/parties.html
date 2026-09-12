@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>العملاء والموردون | مزرعة الغزيز</title>
+  <title>إدارة العملاء والموردين | مزرعة الغزيز</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/variables.css" />
   <link rel="stylesheet" href="../css/reset.css" />
@@ -18,14 +18,26 @@
       <div id="header-container"></div>
       <main class="page-content">
         <div class="page-header">
-          <h2>العملاء والموردون</h2>
-          <button class="btn btn--success" id="add-party-btn">+ تكويد عميل/مورّد جديد</button>
+          <h2>إدارة العملاء والموردين</h2>
+          <div style="display:flex; gap: var(--spacing-2); flex-wrap:wrap;">
+            <a href="customer-collection.html" class="btn btn--outline">+ سند قبض</a>
+            <a href="supplier-payment.html" class="btn btn--outline">+ سند صرف</a>
+            <button class="btn btn--success" id="add-party-btn">+ تكويد عميل/مورّد جديد</button>
+            <a href="parties-hub.html" class="btn btn--outline">→ العودة</a>
+          </div>
         </div>
+
+        <div class="card" id="party-alerts-card" style="margin-bottom: var(--spacing-4); display:none;">
+          <div class="card__header"><h3>🔔 تنبيهات الذمم</h3></div>
+          <div id="party-alerts-list"></div>
+        </div>
+
         <div class="card" style="margin-bottom: var(--spacing-3); display:flex; gap: var(--spacing-3); flex-wrap:wrap; align-items:center;">
           <select id="filter-type" class="form-control" style="max-width:200px;">
-            <option value="">الكل (عملاء وموردون)</option>
+            <option value="">الكل (عملاء وموردون وشركاء)</option>
             <option value="client">العملاء فقط</option>
             <option value="supplier">الموردون فقط</option>
+            <option value="partner">الشركاء فقط</option>
           </select>
         </div>
         <div id="parties-table"></div>
@@ -35,8 +47,12 @@
   <div id="modal-root"></div>
 
   <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
   <script src="../js/services/auth-service.js"></script>
-  <script src="../js/services/notification-service.js"></script>
+  <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/services/revenue-service.js"></script>
+  <script src="../js/services/purchase-service.js"></script>
+  <script src="../js/services/fixed-asset-service.js"></script>
   <script src="../js/services/party-service.js"></script>
   <script src="../js/utils/validators.js"></script>
   <script src="../js/utils/formatters.js"></script>

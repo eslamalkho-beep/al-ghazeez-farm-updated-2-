@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تسوية عهدة | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2>تسوية عهدة</h2>
+          <a href="custody-list.html" class="btn btn--outline">→ العودة لسجل العهد</a>
+        </div>
+
+        <div class="card" id="picker-card" style="margin-bottom: var(--spacing-4);">
+          <div class="card__header"><h3>اختيار العهدة</h3></div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="picker-employeeId">الموظف</label>
+              <select id="picker-employeeId" class="form-control"></select>
+            </div>
+            <div class="form-group">
+              <label for="picker-custodyId">العهدة</label>
+              <select id="picker-custodyId" class="form-control"></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="details-card" style="display:none;">
+          <div class="card__header"><h3>تفاصيل العهدة</h3></div>
+          <div id="custody-details-box" style="font-size:14px; line-height:2; margin-bottom: var(--spacing-3);"></div>
+
+          <form id="settle-form" class="form-grid" novalidate>
+            <div class="form-group">
+              <label for="s-date">التاريخ <span class="required">*</span></label>
+              <input type="date" id="s-date" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label for="s-settlementType">نوع التسوية <span class="required">*</span></label>
+              <select id="s-settlementType" class="form-control"></select>
+            </div>
+            <div class="form-group" id="s-amount-group">
+              <label for="s-amount">القيمة <span class="required">*</span></label>
+              <input type="number" id="s-amount" class="form-control" min="0" step="0.01" />
+            </div>
+            <div class="form-group" id="s-quantity-group" style="display:none;">
+              <label for="s-quantity">الكمية <span class="required">*</span></label>
+              <input type="number" id="s-quantity" class="form-control" min="0" step="1" />
+            </div>
+            <div class="form-group" id="s-category-group" style="display:none;">
+              <label for="s-expenseCategory">بند المصروف <span class="required">*</span></label>
+              <select id="s-expenseCategory" class="form-control"></select>
+            </div>
+            <div class="form-group" id="s-target-employee-group" style="display:none;">
+              <label for="s-targetEmployeeId">الموظف المستفيد من النقل <span class="required">*</span></label>
+              <select id="s-targetEmployeeId" class="form-control"></select>
+            </div>
+            <div class="form-group form-group--full">
+              <label for="s-notes">ملاحظات</label>
+              <textarea id="s-notes" class="form-control" rows="2"></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn--success" id="save-settle-btn">تنفيذ التسوية</button>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div id="modal-root"></div>
+
+  <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/services/inventory-service.js"></script>
+  <script src="../js/services/expense-service.js"></script>
+  <script src="../js/services/custody-service.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/quick-action-fab.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/pages/custody-settle-page.js"></script>
+</body>
+</html>

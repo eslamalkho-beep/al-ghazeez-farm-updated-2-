@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>استبعاد أصل ثابت | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2>🗑️ استبعاد الأصل</h2>
+          <a href="#" id="back-link" class="btn btn--outline">→ العودة لبطاقة الأصل</a>
+        </div>
+        <div class="card" style="margin-bottom: var(--spacing-3);">
+          <strong id="asset-label"></strong>
+          <div class="kpi-grid" id="asset-kpis" style="margin-top: var(--spacing-3);"></div>
+        </div>
+        <div id="not-admin-notice" class="card" style="display:none; border-right: 3px solid var(--color-primary-red);">
+          <p>⚠️ استبعاد أصل ثابت (إعدام/فاقد بلا بيع) يتطلب اعتماد مدير النظام. لا يمكنك تنفيذ هذا الإجراء بصلاحيتك الحالية.</p>
+        </div>
+        <div class="card" id="disposal-card">
+          <p style="font-size:13px; color: var(--color-text-secondary); margin-bottom: var(--spacing-3);">
+            سيُصفَّى الأصل من شجرة الحسابات بالكامل (حساب الأصل ومجمع إهلاكه)، وتُسجَّل كامل قيمته الدفترية المتبقية خسارةً محاسبية.
+            هذا الإجراء نهائي ولا يمكن التراجع عنه إلا يدويًا من سجل القيود.
+          </p>
+          <form id="disposal-form" class="form-grid" novalidate>
+            <div class="form-group">
+              <label for="date">تاريخ الاستبعاد <span class="required">*</span></label>
+              <input type="date" id="date" class="form-control" />
+              <span class="form-error">التاريخ مطلوب</span>
+            </div>
+            <div class="form-group form-group--full">
+              <label for="reason">سبب الاستبعاد <span class="required">*</span></label>
+              <textarea id="reason" class="form-control" rows="3" placeholder="مثال: تلف كلي، فقدان، انتهاء صلاحية الاستخدام..."></textarea>
+              <span class="form-error">سبب الاستبعاد مطلوب</span>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn--danger" id="save-btn">تنفيذ الاستبعاد</button>
+              <a href="#" id="cancel-link" class="btn btn--outline">إلغاء</a>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div id="modal-root"></div>
+
+  <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/services/fixed-asset-service.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/quick-action-fab.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/components/kpi-bar.js"></script>
+  <script src="../js/pages/asset-disposal-page.js"></script>
+</body>
+</html>

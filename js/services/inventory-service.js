@@ -1,9 +1,9 @@
 // js/services/inventory-service.js
 // المخزون والمستلزمات: كتالوج أصناف (أعلاف/أدوية/معدات) + حركات وارد/صادر
-// الرصيد الحالي محسوب حيًا من الحركات (نفس مبدأ computeBulkBatchTotals)، وليس مخزَّنًا
+// الرصيد الحالي محسوب حيًا من الحركات (نفس مبدأ computeBulkGroupBalances)، وليس مخزَّنًا
 
 const INVENTORY_CATEGORY_LABELS = { fodder: 'أعلاف', medicine: 'أدوية', equipment: 'معدات', other: 'أخرى' };
-const INVENTORY_REASON_LABELS = { purchase: 'شراء', consumption: 'استهلاك', damage: 'تالف/هالك', adjustment: 'تسوية جرد', other: 'أخرى' };
+const INVENTORY_REASON_LABELS = { purchase: 'شراء', consumption: 'استهلاك', damage: 'تالف/هالك', adjustment: 'تسوية جرد', custody: 'عهدة', other: 'أخرى' };
 
 async function getAllInventoryItems() {
   const all = await dbGetAll('InventoryItems');
@@ -43,6 +43,13 @@ async function getInventoryMovementByExpenseId(expenseId) {
   return all.find(m => m.relatedExpenseId === Number(expenseId)) || null;
 }
 
+// نفس مبدأ getInventoryMovementByExpenseId أعلاه لكن لمشترى (Purchases.linkedInventoryItemId) — انظر
+// purchase-form-page.js/_syncPurchaseInventoryLink
+async function getInventoryMovementByPurchaseId(purchaseId) {
+  const all = await getAllInventoryMovements();
+  return all.find(m => m.relatedPurchaseId === Number(purchaseId)) || null;
+}
+
 // الرصيد الحالي وحالة "منخفض" لصنف واحد بناءً على مجموعة حركات معطاة (وارد − صادر)
 function computeItemStockLevel(item, allMovements) {
   const itemMovements = allMovements.filter(m => m.itemId === item.id);
@@ -68,34 +75,9 @@ function getLastPurchasePrice(item, allMovements) {
   return Number(sorted[0].unitCost);
 }
 
-// إنشاء حركة مخزون جديدة، مع إشعار تلقائي عند "تحوّل" الصنف إلى حالة منخفض (نفس منطق تحوّل الحالة في health-service.js)
-// لا يُعاد التنبيه إن وُجد إشعار غير مقروء بالفعل لنفس الصنف (تفاديًا للتكرار، بنفس روح فحص العهد الراكدة في custody-list-page.js)
+// إنشاء حركة مخزون جديدة — تنبيه "نفاد الأعلاف" حيّ عبر مركز التنبيهات (alerts-service.js)، لا كتابة هنا
 async function createInventoryMovement(data) {
-  const item = await getInventoryItemById(data.itemId);
-  const movementsBefore = item ? await getAllInventoryMovements() : [];
-  const beforeLevel = item ? computeItemStockLevel(item, movementsBefore) : null;
-
-  const newId = await dbAdd('InventoryMovements', data);
-
-  if (item) {
-    const movementsAfter = [...movementsBefore, { ...data, id: newId, itemId: item.id }];
-    const afterLevel = computeItemStockLevel(item, movementsAfter);
-
-    if (afterLevel.isLowStock && !beforeLevel.isLowStock) {
-      const existingNotifs = await getAllNotifications();
-      const hasUnreadAlert = existingNotifs.some(n => n.type === 'inventory' && n.relatedEntityId === item.id && !n.isRead);
-      if (!hasUnreadAlert) {
-        await createNotification({
-          type: 'inventory',
-          title: `نقص مخزون: ${item.name}`,
-          message: `الصنف "${item.name}" وصل إلى حد الطلب (المتبقي: ${afterLevel.currentQty} ${item.unit || ''})`,
-          relatedEntityId: item.id,
-        });
-      }
-    }
-  }
-
-  return newId;
+  return dbAdd('InventoryMovements', data);
 }
 
 async function updateInventoryMovement(id, data) {

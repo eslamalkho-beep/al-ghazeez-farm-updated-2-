@@ -29,21 +29,10 @@
           </div>
         </div>
         <div class="report-tabs">
-          <a href="herd-reports.html" class="report-tab">تقارير القطيع</a>
-          <a href="health-reports.html" class="report-tab">تقارير السجل الصحي</a>
-          <a href="revenue-reports.html" class="report-tab">تقارير الإيرادات</a>
-          <a href="sales-report.html" class="report-tab">المبيعات وتكلفة الرأس</a>
-          <a href="expense-reports.html" class="report-tab">تقارير المصروفات</a>
-          <a href="purchase-reports.html" class="report-tab">تقارير المشتريات</a>
-          <span class="report-tab active">العملاء والموردون</span>
-          <a href="inventory-reports.html" class="report-tab">المخزون</a>
-          <a href="accounting-reports.html" class="report-tab">المحاسبة</a>
-          <a href="overview-report.html" class="report-tab">التقرير الشامل</a>
-        </div>
-
-        <div class="report-tabs">
           <button type="button" class="report-tab active" id="mode-single-btn" data-mode="single">سجل عميل/مورّد واحد</button>
           <button type="button" class="report-tab" id="mode-top-btn" data-mode="top">أعلى العملاء/الموردين</button>
+          <button type="button" class="report-tab" id="mode-registry-btn" data-mode="registry">سجل الأرصدة</button>
+          <button type="button" class="report-tab" id="mode-aging-btn" data-mode="aging">أعمار الديون</button>
         </div>
 
         <div class="report-filters" id="single-filters">
@@ -74,6 +63,26 @@
           <input type="number" id="top-n" class="form-control" style="max-width:90px;" min="1" step="1" value="10" />
         </div>
 
+        <div class="report-filters" id="registry-filters" style="display:none;">
+          <label style="font-size:13px; color:var(--color-text-secondary);">النوع</label>
+          <select id="registry-type" class="form-control" style="max-width:140px;">
+            <option value="client">عملاء</option>
+            <option value="supplier">موردون</option>
+          </select>
+          <label style="font-size:13px; color:var(--color-text-secondary);">الفلتر</label>
+          <select id="registry-filter" class="form-control" style="max-width:200px;"></select>
+        </div>
+
+        <div class="report-filters" id="aging-filters" style="display:none;">
+          <label style="font-size:13px; color:var(--color-text-secondary);">النوع</label>
+          <select id="aging-type" class="form-control" style="max-width:140px;">
+            <option value="client">عملاء</option>
+            <option value="supplier">موردون</option>
+          </select>
+          <label style="font-size:13px; color:var(--color-text-secondary);">كما في تاريخ</label>
+          <input type="date" id="aging-asof" class="form-control" style="max-width:150px;" />
+        </div>
+
         <div id="report-content"></div>
       </main>
     </div>
@@ -81,10 +90,10 @@
   <div id="modal-root"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
   <script src="../js/services/auth-service.js"></script>
-  <script src="../js/services/notification-service.js"></script>
   <script src="../js/services/revenue-service.js"></script>
   <script src="../js/services/purchase-service.js"></script>
   <script src="../js/services/bulk-batch-service.js"></script>
@@ -98,6 +107,8 @@
   <script src="../js/components/toast.js"></script>
   <script src="../js/components/data-table.js"></script>
   <script src="../js/components/chart-renderer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
   <script src="../js/components/export-utils.js"></script>
   <script src="../js/components/kpi-bar.js"></script>
   <script src="../js/pages/party-reports-page.js"></script>

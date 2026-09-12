@@ -364,6 +364,40 @@
   border-top: 1px solid var(--color-border);
 }
 
+/* ===== مصفوفة الصلاحيات (وحدة × أزرار) — نموذج المستخدم في settings-page.js =====
+   المودال يبقى بعرضه الافتراضي (480px)؛ الجدول نفسه ملفوف بـ overflow-x:auto في settings-page.js
+   ليتمرر أفقيًا داخل المودال بدل تكسير التخطيط */
+.permissions-matrix {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.permissions-matrix th,
+.permissions-matrix td {
+  padding: 6px 8px;
+  text-align: center;
+  border-bottom: 1px solid var(--color-border);
+}
+.permissions-matrix thead th {
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  background: var(--color-bg);
+}
+.permissions-matrix__module {
+  text-align: right;
+}
+.permissions-matrix__module label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.permissions-matrix td input[type="checkbox"]:disabled {
+  opacity: 0.35;
+}
+
 /* ===== الزر العائم لعمليات التسجيل السريعة (quick-action-fab.js) ===== */
 .quick-fab {
   position: fixed;
@@ -374,6 +408,15 @@
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-2);
+  /* ⚠️ حاسم: .quick-fab__menu مخفي بـ opacity فقط (لا display:none) لإتاحة أنيميشن الفتح، فيبقى محتفظًا
+     بارتفاعه الطبيعي داخل هذا العمود (flex-direction:column) حتى وهو "مغلق" ومرئي بصفر شفافية — كلما زاد
+     عدد عناصر QUICK_ACTIONS كبُر هذا الارتفاع الوهمي، فيمتد الصندوق المحيط (fixed) لأعلى الشاشة من ناحية
+     اليسار ويسرق أي ضغطة تقع فوقه حتى لو كانت موجّهة لزر آخر تحته تمامًا (مثل "+ تكويد موظف جديد"/"+ إضافة
+     مستخدم" في صفحات لا يتسع عرضها فيلتف شريط الأزرار العلوي على أكثر من سطر) — بلا أي أثر بصري يدل على
+     المشكلة. pointer-events:none هنا يمنع هذا الصندوق (الحاوية فقط) من اعتراض أي ضغطة إطلاقًا؛ الزر
+     المستدير وعناصر القائمة تستعيد قابلية الضغط صراحة أدناه (.quick-fab__btn دائمًا، .quick-fab__item فقط
+     عند open) */
+  pointer-events: none;
 }
 
 .quick-fab__btn {
@@ -389,6 +432,7 @@
   border: none;
   cursor: pointer;
   flex-shrink: 0;
+  pointer-events: auto; /* الحاوية .quick-fab أعلاه pointer-events:none — هذا الزر وحده يجب أن يبقى قابلاً للضغط */
 }
 
 .quick-fab__btn-icon {

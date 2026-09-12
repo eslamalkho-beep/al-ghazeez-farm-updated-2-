@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تسجيل أصل ثابت | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2 id="form-title">تسجيل أصل ثابت جديد</h2>
+          <a href="asset-list.html" class="btn btn--outline">→ العودة للسجل</a>
+        </div>
+        <div class="card">
+          <form id="asset-form" class="form-grid" novalidate>
+            <div class="form-group">
+              <label for="name">اسم الأصل <span class="required">*</span></label>
+              <input type="text" id="name" class="form-control" />
+              <span class="form-error">اسم الأصل مطلوب</span>
+            </div>
+            <div class="form-group">
+              <label for="assetType">نوع الأصل <span class="required">*</span></label>
+              <select id="assetType" class="form-control">
+                <option value="land">أرض</option>
+                <option value="building">مبنى/حظيرة</option>
+                <option value="vehicle">سيارة</option>
+                <option value="equipment">معدات وآلات</option>
+                <option value="device">جهاز</option>
+                <option value="furniture">أثاث</option>
+                <option value="other">أخرى</option>
+              </select>
+              <span style="font-size:11.5px; color: var(--color-text-secondary);" id="land-note">الأرض لا تُهلك محاسبيًا — حقول الإهلاك أدناه تُخفى تلقائيًا.</span>
+            </div>
+            <div class="form-group">
+              <label for="category">التصنيف الفرعي</label>
+              <input type="text" id="category" class="form-control" placeholder="مثال: جرار زراعي (اختياري)" />
+            </div>
+            <div class="form-group">
+              <label for="purchaseDate">تاريخ الشراء <span class="required">*</span></label>
+              <input type="date" id="purchaseDate" class="form-control" />
+              <span class="form-error">التاريخ مطلوب</span>
+            </div>
+            <div class="form-group">
+              <label for="usageStartDate">تاريخ بدء الاستخدام <span class="required">*</span></label>
+              <input type="date" id="usageStartDate" class="form-control" />
+              <span class="form-error">التاريخ مطلوب — يُستخدم كبداية احتساب الإهلاك</span>
+            </div>
+            <div class="form-group">
+              <label for="invoiceNumber">رقم الفاتورة</label>
+              <input type="text" id="invoiceNumber" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label for="partyId">المورّد/الشريك المسجّل</label>
+              <select id="partyId" class="form-control"><option value="">-- اختر موردًا أو شريكًا مسجّلاً --</option></select>
+            </div>
+            <div class="form-group" id="vendor-manual-group">
+              <label for="vendor">أو أدخل اسم مورّد غير مسجّل</label>
+              <input type="text" id="vendor" class="form-control" placeholder="اسم حر (اختياري)" />
+            </div>
+            <div class="form-group">
+              <label for="locationId">موقع الأصل / الحظيرة</label>
+              <select id="locationId" class="form-control"><option value="">-- بلا موقع محدد --</option></select>
+            </div>
+            <div class="form-group">
+              <label for="responsibleEmployeeId">المسؤول عن الأصل</label>
+              <select id="responsibleEmployeeId" class="form-control"><option value="">-- بلا مسؤول محدد --</option></select>
+            </div>
+            <div class="form-group">
+              <label for="serialNumber">رقم اللوحة/السيريال</label>
+              <input type="text" id="serialNumber" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label for="costCenter">مركز التكلفة</label>
+              <input type="text" id="costCenter" class="form-control" placeholder="اختياري" />
+            </div>
+            <div class="form-group">
+              <label for="purchaseCost">تكلفة الشراء <span class="required">*</span></label>
+              <input type="number" id="purchaseCost" class="form-control" min="0" step="0.01" />
+              <span class="form-error">أدخل تكلفة صحيحة</span>
+            </div>
+            <div class="form-group">
+              <label for="acquisitionAdditionalCosts">تكاليف إضافية مرتبطة بالاقتناء</label>
+              <input type="number" id="acquisitionAdditionalCosts" class="form-control" min="0" step="0.01" value="0" />
+              <span style="font-size:11.5px; color: var(--color-text-secondary);">نقل/تركيب/تجهيز إلخ — تُضاف لتكلفة الأصل</span>
+            </div>
+            <div class="form-group form-group--full">
+              <label>القيمة الإجمالية للأصل (محسوبة)</label>
+              <div class="tax-breakdown-box"><strong id="total-cost-label">-</strong></div>
+            </div>
+            <div class="form-group">
+              <label for="paymentMethod">طريقة الدفع</label>
+              <select id="paymentMethod" class="form-control">
+                <option value="cash">نقدي</option>
+                <option value="transfer">تحويل بنكي</option>
+                <option value="cheque">شيك</option>
+                <option value="credit">آجل (على الحساب)</option>
+                <option value="partnerContribution">مساهمة من شريك</option>
+              </select>
+            </div>
+            <div class="form-group depreciation-field">
+              <label for="usefulLifeYears">العمر الإنتاجي (سنوات)</label>
+              <input type="number" id="usefulLifeYears" class="form-control" min="0" step="1" />
+            </div>
+            <div class="form-group depreciation-field">
+              <label for="residualValue">القيمة المتبقية</label>
+              <input type="number" id="residualValue" class="form-control" min="0" step="0.01" value="0" />
+            </div>
+            <div class="form-group form-group--full depreciation-field">
+              <label>القسط الشهري المقدَّر (القسط الثابت)</label>
+              <div class="tax-breakdown-box"><strong id="monthly-depreciation-label">-</strong></div>
+            </div>
+            <div class="form-group form-group--full">
+              <label for="notes">ملاحظات</label>
+              <textarea id="notes" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn--success" id="save-btn">حفظ</button>
+              <a href="asset-list.html" class="btn btn--outline">إلغاء</a>
+              <button type="button" class="btn btn--danger" id="delete-btn" style="display:none; margin-right:auto;">حذف</button>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+  </div>
+  <div id="modal-root"></div>
+
+  <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/services/fixed-asset-service.js"></script>
+  <script src="../js/services/party-service.js"></script>
+  <script src="../js/services/location-service.js"></script>
+  <script src="../js/utils/validators.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/quick-action-fab.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/pages/asset-form-page.js"></script>
+</body>
+</html>

@@ -18,25 +18,40 @@ async function deletePurchase(id) {
 }
 
 // ترحيل تلقائي من المشتريات للمحاسبة — نفس مبدأ syncExpenseJournalEntry تمامًا (وحدة منفصلة مقصودة عن
-// المصروفات التشغيلية، لكن بنفس طبيعة القيد: مدين حساب البند المرتبط، دائن الصندوق/البنك حسب طريقة الدفع
-// أو "ذمم دائنة" إن كان بانتظار الاعتماد)
-const PURCHASE_FALLBACK_ACCOUNT_CODE = '5080'; // مصروفات أخرى — لبند بلا ربط حساب في شاشة التكويدات
-const PURCHASE_CREDIT_ACCOUNT_CODE_BY_PAYMENT = { cash: '1000', transfer: '1010', cheque: '1010' };
-const PURCHASE_PAYABLE_ACCOUNT_CODE = '2000'; // ذمم دائنة — أثناء status === 'pending' (لم يُدفع بعد)
-
+// المصروفات التشغيلية، لكن بنفس طبيعة القيد: مدين حساب البند المرتبط، دائن حسب طريقة الدفع).
+// الحسابات تُحل عبر "ربط العمليات بالحسابات" بتراجع تدريجي (الأكثر تحديدًا يفوز):
+// دائن: حساب المورّد المخصص (partyAccount:<id>) > حساب البند لهذه الطريقة (catPayCash/Bank/Credit:<id>) > العام
+// مدين: حساب المخزون المرتبط بالبند (catInventory:<id> — يُرسمَل الشراء على المخزون بدل المصروف إن حُدِّد)
+// > حساب البند نفسه > purchaseFallback دفاعيًا
 async function syncPurchaseJournalEntry(purchaseId) {
   const purchase = await dbGet('Purchases', purchaseId);
   if (!purchase || Number(purchase.amount) <= 0) return null;
 
-  const [categories, accounts] = await Promise.all([getAllCategories('purchase'), getAllAccounts()]);
-  const category = categories.find(c => c.name === purchase.category);
-  const debitAccount = (category && category.linkedAccountId && accounts.find(a => a.id === category.linkedAccountId))
-    || getAccountByCode(PURCHASE_FALLBACK_ACCOUNT_CODE, accounts);
+  const [accounts, mappings] = await Promise.all([getAllAccounts(), loadAccountMappings()]);
+  // البند صار حسابًا مباشرة من شجرة الحسابات (categoryAccountId) — مطابقة الاسم النصي القديم خط دفاع ثانٍ فقط
+  // لسجلات سابقة لم تُرحَّل بعد (انظر _migrateCategoryToAccountIdIfNeeded في seed.js)
+  const categoryAccount = (purchase.categoryAccountId && accounts.find(a => a.id === purchase.categoryAccountId))
+    || accounts.find(a => a.type === 'expense' && a.name === purchase.category)
+    || null;
 
-  const creditCode = purchase.status === 'pending'
-    ? PURCHASE_PAYABLE_ACCOUNT_CODE
-    : (PURCHASE_CREDIT_ACCOUNT_CODE_BY_PAYMENT[purchase.paymentMethod] || PURCHASE_CREDIT_ACCOUNT_CODE_BY_PAYMENT.cash);
-  const creditAccount = getAccountByCode(creditCode, accounts);
+  const inventoryKey = categoryAccount ? `catInventory:${categoryAccount.id}` : null;
+  const inventoryAccount = inventoryKey ? getMappedAccount(inventoryKey, accounts, mappings) : null;
+  const debitAccount = inventoryAccount || categoryAccount || getMappedAccount('purchaseFallback', accounts, mappings);
+
+  let creditAccount = null;
+  const catCashKey = categoryAccount ? `catPayCash:${categoryAccount.id}` : null;
+  const catBankKey = categoryAccount ? `catPayBank:${categoryAccount.id}` : null;
+  const catCreditKey = categoryAccount ? `catPayCredit:${categoryAccount.id}` : null;
+  if (purchase.status === 'pending') {
+    creditAccount = getMappedAccount('purchasePayPending', accounts, mappings);
+  } else if (purchase.paymentMethod === 'credit') {
+    const partyKey = purchase.partyId ? `partyAccount:${purchase.partyId}` : null;
+    creditAccount = getMappedAccountWithFallback([partyKey, catCreditKey, 'purchasePayCredit'], accounts, mappings);
+  } else if (purchase.paymentMethod === 'cash') {
+    creditAccount = getMappedAccountWithFallback([catCashKey, 'purchasePayCash'], accounts, mappings);
+  } else {
+    creditAccount = getMappedAccountWithFallback([catBankKey, 'purchasePayBank'], accounts, mappings);
+  }
 
   if (!debitAccount || !creditAccount) return null; // دفاعي: حساب أساسي محذوف يدويًا من شجرة الحسابات
 

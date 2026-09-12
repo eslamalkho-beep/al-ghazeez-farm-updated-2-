@@ -31,25 +31,20 @@
           </div>
         </div>
 
-        <div class="report-tabs">
-          <a href="herd-reports.html" class="report-tab">تقارير القطيع</a>
-          <a href="health-reports.html" class="report-tab">تقارير السجل الصحي</a>
-          <a href="revenue-reports.html" class="report-tab">تقارير الإيرادات</a>
-          <span class="report-tab active">المبيعات وتكلفة الرأس</span>
-          <a href="expense-reports.html" class="report-tab">تقارير المصروفات</a>
-          <a href="purchase-reports.html" class="report-tab">تقارير المشتريات</a>
-          <a href="party-reports.html" class="report-tab">العملاء والموردون</a>
-          <a href="inventory-reports.html" class="report-tab">المخزون</a>
-          <a href="accounting-reports.html" class="report-tab">المحاسبة</a>
-          <a href="overview-report.html" class="report-tab">التقرير الشامل</a>
-        </div>
-
         <div class="report-filters">
           <label style="font-size:13px; color:var(--color-text-secondary);">من</label>
           <input type="date" id="report-from" class="form-control" style="max-width:170px;" />
           <label style="font-size:13px; color:var(--color-text-secondary);">إلى</label>
           <input type="date" id="report-to" class="form-control" style="max-width:170px;" />
           <span style="font-size:12px; color:var(--color-text-secondary);">(الفترة تُطبَّق على قسم المبيعات فقط — تكلفة الرأس رصيد تراكمي دائمًا لكل حيوان)</span>
+          <label style="font-size:13px; color:var(--color-text-secondary); margin-inline-start:12px;">حالة الحيوان (لسجل تكلفة الرأس)</label>
+          <select id="cost-status-filter" class="form-control" style="max-width:190px;">
+            <option value="">كل الحيوانات</option>
+            <option value="alive">حي</option>
+            <option value="sold">مباع</option>
+            <option value="dead">نافق</option>
+            <option value="movedToTrade">تحويل لمخزون التجارة</option>
+          </select>
         </div>
 
         <div id="report-content"></div>
@@ -58,14 +53,20 @@
   </div>
   <div id="modal-root"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
   <script src="../js/services/auth-service.js"></script>
-  <script src="../js/services/notification-service.js"></script>
+  <script src="../js/services/accounting-service.js"></script>
   <script src="../js/services/animal-service.js"></script>
   <script src="../js/services/revenue-service.js"></script>
   <script src="../js/services/bulk-batch-service.js"></script>
   <script src="../js/services/health-service.js"></script>
+  <script src="../js/services/expense-service.js"></script>
+  <script src="../js/services/weight-service.js"></script>
+  <script src="../js/services/inventory-service.js"></script>
+  <script src="../js/services/death-service.js"></script>
+  <script src="../js/services/fattening-service.js"></script>
   <script src="../js/utils/formatters.js"></script>
   <script src="../js/components/sidebar.js"></script>
   <script src="../js/components/quick-action-fab.js"></script>
@@ -73,6 +74,8 @@
   <script src="../js/components/modal.js"></script>
   <script src="../js/components/toast.js"></script>
   <script src="../js/components/data-table.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
   <script src="../js/components/export-utils.js"></script>
   <script src="../js/components/kpi-bar.js"></script>
   <script src="../js/pages/sales-report-page.js"></script>

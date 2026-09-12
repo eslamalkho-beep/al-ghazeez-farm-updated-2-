@@ -2,20 +2,37 @@
 
 let _editingRevenueId = null;
 let _saleAnimals = [];
+let _revenueCategoryAccountsCache = []; // حسابات الإيرادات القابلة للاختيار كبند (شجرة الحسابات — انظر CLAUDE.md)
+let _loadedRevenue = null; // نحتفظ بالسجل الأصلي فقط لحفظ category/categoryAccountId كما هما لو بقي المستخدم على خيار "بند/حساب غير متاح حاليًا"
+
+// حسابات "إيرادات بيع الحيوانات" (411*/412*) — يظهر حقل اختيار الحيوان عند اختيار أي ورقة تحت فرعي الأغنام/
+// الماعز من شجرة الحسابات، بدل الفحص القديم بالكود الثابت 4000 (انظر isAnimalSaleAccount في accounting-service.js)
+// ويُحدَّد البيع بربطه بحقل animalId، بدل مطابقة نص البند الهش القديم ('بيع حيوان')
 
 document.addEventListener('DOMContentLoaded', async () => {
   requireAuth('revenues');
   renderSidebar('revenues');
   renderHeader('تكويد إيراد جديد');
 
-  const revenueCategories = await getCategoryNames('revenue');
-  document.getElementById('category').innerHTML = revenueCategories.map(c => `<option value="${c}">${c}</option>`).join('');
-  document.getElementById('category').addEventListener('change', _toggleAnimalField);
+  const _paramsForPermCheck = new URLSearchParams(window.location.search);
+  const _requiredAction = _paramsForPermCheck.get('id') ? 'edit' : 'add';
+  if (!hasActionPermission('revenues', _requiredAction)) {
+    showToast(_paramsForPermCheck.get('id') ? 'ليس لديك صلاحية تعديل الإيرادات' : 'ليس لديك صلاحية إضافة إيراد', 'error');
+    window.location.href = 'revenue-list.html';
+    return;
+  }
 
-  const clients = await getAllParties('client');
+  _revenueCategoryAccountsCache = await getCategoryAccounts('revenue');
+  document.getElementById('category').innerHTML = _revenueCategoryAccountsCache
+    .map(a => `<option value="${a.id}">${a.code} - ${a.name}</option>`).join('');
+  document.getElementById('category').addEventListener('change', _toggleAnimalField);
+  document.getElementById('animalId').addEventListener('change', _applyAnimalTypeCategorySuggestion);
+
+  const [clients, partners] = await Promise.all([getAllParties('client'), getAllParties('partner')]);
   const partySelect = document.getElementById('partyId');
-  partySelect.innerHTML = `<option value="">-- اختر عميلاً مسجّلاً --</option>` +
-    clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  partySelect.innerHTML = `<option value="">-- اختر عميلاً مسجّلاً --</option>`
+    + `<optgroup label="عملاء">${clients.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}</optgroup>`
+    + `<optgroup label="شركاء">${partners.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}</optgroup>`;
   partySelect.addEventListener('change', _toggleClientManualField);
 
   const params = new URLSearchParams(window.location.search);
@@ -25,10 +42,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     _editingRevenueId = Number(idParam);
     await _loadRevenueIntoForm(_editingRevenueId);
     document.getElementById('form-title').textContent = 'تعديل إيراد';
-    document.getElementById('delete-btn').style.display = 'inline-flex';
+    if (hasActionPermission('revenues', 'delete')) {
+      document.getElementById('delete-btn').style.display = 'inline-flex';
+    }
   } else {
     document.getElementById('date').value = todayIso();
     await _populateAnimalSelect();
+
+    // قادم من بوابة "بيع حيوان" (herd/animal-sale.html) باختيار "بيع أصل" — تهيئة نوع الإيراد مسبقًا بدل
+    // ترك المستخدم يختاره يدويًا من القائمة (يعمل فقط لو الحساب المُمرَّر بالكود لا يزال قابلاً للاختيار)
+    const categoryCodeParam = params.get('categoryCode');
+    const categorySelect = document.getElementById('category');
+    const presetAccount = categoryCodeParam && _revenueCategoryAccountsCache.find(a => a.code === categoryCodeParam);
+    if (presetAccount) {
+      categorySelect.value = String(presetAccount.id);
+    }
   }
 
   _toggleAnimalField();
@@ -74,9 +102,39 @@ async function _populateAnimalSelect(selectedAnimalId = null) {
   if (selectedAnimalId) select.value = String(selectedAnimalId);
 }
 
+// عند اختيار حيوان: يُقترح بند الإيراد تلقائيًا حسب نوع الحيوان من "ربط العمليات بالحسابات"
+// (animalSaleSheep/animalSaleGoat — الافتراضي مبيعات أغنام/ماعز)، بشرط أن يكون البند الحالي بند بيع حيوان
+// أو فارغًا — أي اختيار يدوي سابق لبند آخر يُحترم ولا يُتجاوز
+async function _applyAnimalTypeCategorySuggestion() {
+  if (_editingRevenueId) return; // تعديل سجل قائم: لا نغيّر البند المحفوظ
+  const animalSelect = document.getElementById('animalId');
+  const categorySelect = document.getElementById('category');
+  const animal = _saleAnimals.find(a => a.id === Number(animalSelect.value));
+  if (!animal) return;
+
+  const currentSelected = _revenueCategoryAccountsCache.find(a => a.id === Number(categorySelect.value));
+  const isAnimalSaleSelected = !categorySelect.value || (currentSelected && isAnimalSaleAccount(currentSelected));
+  if (!isAnimalSaleSelected) return; // المستخدم اختار بندًا غير بيع الحيوانات يدويًا — نحترمه
+
+  const mappings = await loadAccountMappings();
+  const suggestedCode = resolveMappedAccountCode(animal.type === 'goat' ? 'animalSaleGoat' : 'animalSaleSheep', mappings);
+  const suggestedAccount = suggestedCode && _revenueCategoryAccountsCache.find(a => a.code === suggestedCode);
+  if (suggestedAccount) {
+    categorySelect.value = String(suggestedAccount.id);
+    _toggleAnimalField();
+  }
+}
+
+// هل الحساب المختار حاليًا من حسابات "إيرادات بيع الحيوانات" (411*/412*)؟ نفس الفحص يُستخدم في
+// _toggleAnimalField و_handleSubmit (انظر isAnimalSaleAccount في accounting-service.js)
+function _isAnimalSaleAccountSelected() {
+  const selectedId = Number(document.getElementById('category').value);
+  const selectedAccount = _revenueCategoryAccountsCache.find(a => a.id === selectedId);
+  return isAnimalSaleAccount(selectedAccount);
+}
+
 function _toggleAnimalField() {
-  const isSale = document.getElementById('category').value === 'بيع حيوان';
-  document.getElementById('animal-field-group').style.display = isSale ? '' : 'none';
+  document.getElementById('animal-field-group').style.display = _isAnimalSaleAccountSelected() ? '' : 'none';
 }
 
 async function _loadRevenueIntoForm(id) {
@@ -86,14 +144,17 @@ async function _loadRevenueIntoForm(id) {
     window.location.href = 'revenue-list.html';
     return;
   }
+  _loadedRevenue = revenue;
   const categorySelect = document.getElementById('category');
-  categorySelect.value = revenue.category || '';
-  if (revenue.category && categorySelect.value !== revenue.category) {
+  const categoryMatched = revenue.categoryAccountId && _revenueCategoryAccountsCache.some(a => a.id === revenue.categoryAccountId);
+  if (categoryMatched) {
+    categorySelect.value = String(revenue.categoryAccountId);
+  } else {
     const opt = document.createElement('option');
-    opt.value = revenue.category;
-    opt.textContent = `${revenue.category} (بند محذوف)`;
+    opt.value = '-1';
+    opt.textContent = `${revenue.category || 'بند غير معروف'} (بند/حساب غير متاح حاليًا)`;
     categorySelect.prepend(opt);
-    categorySelect.value = revenue.category;
+    categorySelect.value = '-1';
   }
   document.getElementById('amount').value = revenue.amount ?? '';
   document.getElementById('date').value = revenue.date || '';
@@ -110,7 +171,7 @@ async function _loadRevenueIntoForm(id) {
 async function _handleSubmit(e) {
   e.preventDefault();
 
-  const isSale = document.getElementById('category').value === 'بيع حيوان';
+  const isSale = _isAnimalSaleAccountSelected();
 
   const validations = [
     { fieldId: 'amount', validatorFn: isPositiveNumber, message: 'أدخل مبلغًا صحيحًا' },
@@ -122,6 +183,12 @@ async function _handleSubmit(e) {
 
   const isValid = validateForm(validations);
   if (!isValid) return;
+
+  const isCredit = document.getElementById('receiveMethod').value === 'credit';
+  if (isCredit && !document.getElementById('partyId').value) {
+    showToast('البيع الآجل يتطلب اختيار عميل أو شريك مسجّل (ليُحسب له كذمة مدينة)', 'error');
+    return;
+  }
 
   const animalIdValue = document.getElementById('animalId').value;
   const newAnimalId = isSale && animalIdValue ? Number(animalIdValue) : null;
@@ -137,8 +204,15 @@ async function _handleSubmit(e) {
   const selectedPartyName = partyId ? document.getElementById('partyId').selectedOptions[0].textContent : '';
   const client = partyId ? selectedPartyName : document.getElementById('client').value.trim();
 
+  const categoryAccountIdValue = Number(document.getElementById('category').value);
+  const selectedCategoryAccount = _revenueCategoryAccountsCache.find(a => a.id === categoryAccountIdValue);
+  // القيمة -1 (بند/حساب محذوف) تعني إبقاء البند كما كان بلا تعديل — انظر _loadRevenueIntoForm
+  const category = selectedCategoryAccount ? selectedCategoryAccount.name : (_loadedRevenue ? _loadedRevenue.category : '');
+  const categoryAccountId = selectedCategoryAccount ? selectedCategoryAccount.id : (_loadedRevenue ? _loadedRevenue.categoryAccountId : null);
+
   const data = {
-    category: document.getElementById('category').value,
+    category,
+    categoryAccountId,
     amount,
     date: document.getElementById('date').value,
     hasTaxInvoice,
@@ -150,6 +224,10 @@ async function _handleSubmit(e) {
     notes: document.getElementById('notes').value.trim(),
     animalId: newAnimalId,
   };
+
+  // قفل الفترات المحاسبية: يمنع الحفظ لو تاريخ السجل الأصلي (عند التعديل) أو التاريخ الجديد المُدخَل ضمن فترة مغلقة
+  if (_loadedRevenue && !(await guardPeriodOpenForSave(_loadedRevenue.date))) return;
+  if (!(await guardPeriodOpenForSave(data.date))) return;
 
   const saveBtn = document.getElementById('save-btn');
   saveBtn.disabled = true;
@@ -184,7 +262,10 @@ async function _handleSubmit(e) {
   }
 }
 
-function _handleDelete() {
+async function _handleDelete() {
+  const existingForGuard = await dbGet('Revenues', _editingRevenueId);
+  if (existingForGuard && !(await guardPeriodOpenForSave(existingForGuard.date))) return;
+
   confirmDelete('هل أنت متأكد من حذف هذا الإيراد؟ سيُحذف أيضًا القيد المحاسبي المرتبط به إن وُجد.', async () => {
     const existing = await dbGet('Revenues', _editingRevenueId);
     await reverseRevenueJournalEntry(_editingRevenueId);

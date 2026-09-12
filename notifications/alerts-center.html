@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>مركز التنبيهات | مزرعة الغزيز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/reset.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+  <style>
+    .alert-section { margin-bottom: var(--spacing-4); }
+    .alert-section .card__header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .alert-section .card__header h3 { display:flex; align-items:center; gap:8px; }
+    .quick-alert-item { text-decoration:none; color:inherit; display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+    .quick-alert-item:hover { background: var(--color-bg); }
+    .quick-alert-item--read { opacity: .55; }
+    .quick-alert-item__body { display:flex; align-items:flex-start; gap:10px; flex:1; min-width:0; }
+    .quick-alert-item__mark-read { flex-shrink:0; }
+    .quick-alert-item__date { display:inline-block; margin-inline-start:8px; font-size:11px; color: var(--color-text-secondary); white-space:nowrap; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div id="sidebar-container"></div>
+    <div class="main-area">
+      <div id="header-container"></div>
+      <main class="page-content">
+        <div class="page-header">
+          <h2>مركز التنبيهات</h2>
+          <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+            <label style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:normal;">
+              <input type="checkbox" id="show-read-toggle" /> عرض المقروءة أيضًا
+            </label>
+            <button type="button" class="btn btn--outline" id="mark-all-read-btn">✓ تعليم الكل كمقروء</button>
+            <button type="button" class="btn btn--outline" id="refresh-btn">تحديث</button>
+          </div>
+        </div>
+
+        <div class="kpi-grid" id="alerts-summary-kpis" style="margin-bottom: var(--spacing-4);"></div>
+
+        <div id="alerts-sections"></div>
+      </main>
+    </div>
+  </div>
+
+  <div id="modal-root"></div>
+
+  <script src="../js/db/db.js"></script>
+<script src="../js/services/account-mapping-service.js"></script>
+  <script src="../js/services/auth-service.js"></script>
+  <script src="../js/services/animal-service.js"></script>
+  <script src="../js/services/birth-service.js"></script>
+  <script src="../js/services/death-service.js"></script>
+  <script src="../js/services/vaccination-service.js"></script>
+  <script src="../js/services/pregnancy-service.js"></script>
+  <script src="../js/services/custody-service.js"></script>
+  <script src="../js/services/party-service.js"></script>
+  <script src="../js/services/revenue-service.js"></script>
+  <script src="../js/services/purchase-service.js"></script>
+  <script src="../js/services/expense-service.js"></script>
+  <script src="../js/services/inventory-service.js"></script>
+  <script src="../js/services/accounting-service.js"></script>
+  <script src="../js/services/alerts-service.js"></script>
+  <script src="../js/utils/formatters.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/quick-action-fab.js"></script>
+  <script src="../js/components/header.js"></script>
+  <script src="../js/components/modal.js"></script>
+  <script src="../js/components/toast.js"></script>
+  <script src="../js/components/kpi-bar.js"></script>
+  <script src="../js/pages/alerts-center-page.js"></script>
+</body>
+</html>

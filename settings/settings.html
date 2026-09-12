@@ -26,6 +26,14 @@
           <section class="card">
             <div class="card__header"><h3>بيانات المزرعة</h3></div>
             <form id="farm-settings-form" class="form-grid">
+              <div class="form-group form-group--full" style="display:flex; align-items:center; gap:12px;">
+                <div id="farm-logo-preview"></div>
+                <div style="flex:1;">
+                  <label>شعار المزرعة</label>
+                  <input type="file" id="farmLogo" class="form-control" accept="image/*" />
+                  <button type="button" class="btn btn--outline btn--sm" id="reset-farm-logo-btn" style="margin-top:6px;">استخدام الشعار الافتراضي</button>
+                </div>
+              </div>
               <div class="form-group">
                 <label for="farmName">اسم المزرعة</label>
                 <input type="text" id="farmName" class="form-control" />
@@ -55,7 +63,73 @@
               <label class="btn btn--outline" for="import-data-file" style="cursor:pointer;">استيراد نسخة احتياطية</label>
               <input type="file" id="import-data-file" accept="application/json" style="display:none;" />
               <button type="button" class="btn btn--danger" id="reset-data-btn">حذف البيانات وإعادة البداية</button>
+              <a href="audit-log.html" class="btn btn--outline">📋 سجل التدقيق</a>
             </div>
+          </section>
+
+          <section class="card">
+            <div class="card__header"><h3>🔐 التحقق بخطوتين (2FA)</h3></div>
+            <p style="color: var(--color-text-secondary); font-size: 14px; margin-bottom: var(--spacing-3);">
+              طبقة حماية إضافية لحسابك الشخصي: بعد كلمة المرور، يُطلب كود متجدد من تطبيق مصادقة على موبايلك
+              (مثل Google Authenticator) عند كل تسجيل دخول.
+            </p>
+            <div style="display:flex; align-items:center; gap: var(--spacing-3); flex-wrap:wrap;">
+              <span id="twofa-status-badge" class="badge badge--gray">غير مفعّل</span>
+              <button type="button" class="btn btn--primary" id="twofa-enable-btn">تفعيل التحقق بخطوتين</button>
+              <button type="button" class="btn btn--outline" id="twofa-regen-codes-btn" style="display:none;">🔁 توليد رموز احتياطية جديدة</button>
+              <button type="button" class="btn btn--danger" id="twofa-disable-btn" style="display:none;">تعطيل التحقق بخطوتين</button>
+            </div>
+            <p style="font-size:12px; color: var(--color-text-secondary); margin-top: var(--spacing-2);">
+              💡 عند التفعيل ستظهر لك رموز احتياطية مرة واحدة — احفظها بمكان آمن، فهي الحل الوحيد لو ضاع جوالك ولم يوجد مدير نظام آخر يقدر يوقف 2FA بدلاً منك.
+            </p>
+          </section>
+
+          <section class="card" style="grid-column: 1 / -1;">
+            <div class="card__header"><h3>🔔 تنبيهات القطيع</h3></div>
+            <p style="color: var(--color-text-secondary); font-size: 14px; margin-bottom: var(--spacing-3);">
+              عند التفعيل، تظهر هذه التنبيهات في مركز التنبيهات ولوحة التحكم — بلا أي أثر على رصيد أو تقرير.
+            </p>
+            <form id="alerts-preferences-form" class="form-grid">
+              <div class="form-group">
+                <label for="cash-threshold-input">حد تنبيه انخفاض رصيد الصندوق/البنك</label>
+                <input type="number" id="cash-threshold-input" class="form-control" min="0" step="1" placeholder="بلا حد (معطّل)" />
+                <span style="font-size:12px; color: var(--color-text-secondary);">إن انخفض رصيد الصندوق أو البنك عن هذا المبلغ يظهر تنبيه في مركز التنبيهات.</span>
+              </div>
+              <div class="form-group">
+                <label><input type="checkbox" id="age-sheepMale-enabled" /> بلوغ سن معيّن — الأغنام (ذكور)</label>
+                <input type="number" id="age-sheepMale-months" class="form-control" min="1" placeholder="السن بالأشهر" />
+              </div>
+              <div class="form-group">
+                <label><input type="checkbox" id="age-sheepFemale-enabled" /> بلوغ سن معيّن — الأغنام (إناث)</label>
+                <input type="number" id="age-sheepFemale-months" class="form-control" min="1" placeholder="السن بالأشهر" />
+              </div>
+              <div class="form-group">
+                <label><input type="checkbox" id="age-goatMale-enabled" /> بلوغ سن معيّن — الماعز (ذكور)</label>
+                <input type="number" id="age-goatMale-months" class="form-control" min="1" placeholder="السن بالأشهر" />
+              </div>
+              <div class="form-group">
+                <label><input type="checkbox" id="age-goatFemale-enabled" /> بلوغ سن معيّن — الماعز (إناث)</label>
+                <input type="number" id="age-goatFemale-months" class="form-control" min="1" placeholder="السن بالأشهر" />
+              </div>
+              <div class="form-group">
+                <label><input type="checkbox" id="alert-birthsMonthly" /> تنبيه بعدد المواليد خلال الشهر الحالي</label>
+              </div>
+              <div class="form-group">
+                <label><input type="checkbox" id="alert-births3Months" /> تنبيه بعدد المواليد خلال آخر 3 أشهر</label>
+              </div>
+              <div class="form-group">
+                <label><input type="checkbox" id="alert-deathsMonthly" /> تنبيه بعدد حالات النفوق خلال الشهر الحالي</label>
+              </div>
+              <div class="form-group">
+                <label><input type="checkbox" id="alert-deaths3Months" /> تنبيه بعدد حالات النفوق خلال آخر 3 أشهر</label>
+              </div>
+              <div class="form-group">
+                <label><input type="checkbox" id="alert-herdCountChange" /> تنبيه عند تغيّر عدد القطيع (ذكور/إناث أغنام وماعز)</label>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn--success">حفظ تفضيلات التنبيهات</button>
+              </div>
+            </form>
           </section>
 
           <section class="card" id="user-management-section" style="display:none; grid-column: 1 / -1;">
@@ -71,9 +145,11 @@
   </div>
   <div id="modal-root"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script src="../js/db/db.js"></script>
+  <script src="../js/services/totp-service.js"></script>
   <script src="../js/services/auth-service.js"></script>
-  <script src="../js/services/notification-service.js"></script>
+  <script src="../js/services/alerts-service.js"></script>
   <script src="../js/utils/validators.js"></script>
   <script src="../js/utils/formatters.js"></script>
   <script src="../js/components/sidebar.js"></script>

@@ -19,21 +19,37 @@ async function deleteRevenue(id) {
 
 // ترحيل تلقائي من الإيرادات للمحاسبة — بنفس مبدأ syncExpenseJournalEntry في expense-service.js:
 // قيد واحد "مُعاد الصياغة" لكل إيراد، يُحدَّث في مكانه عند أي تعديل (مدين الصندوق/البنك حسب طريقة التحصيل،
-// دائن حساب البند المرتبط أو "إيرادات أخرى" إن لم يُربط بحساب من شاشة التكويدات)
-const REVENUE_FALLBACK_ACCOUNT_CODE = '4020'; // إيرادات أخرى — لبند بلا ربط حساب في شاشة التكويدات
-const REVENUE_DEBIT_ACCOUNT_CODE_BY_METHOD = { cash: '1000', transfer: '1010' };
-
+// دائن حساب البند المرتبط أو "إيرادات أخرى" إن لم يُربط بحساب من شاشة التكويدات).
+// الحسابات تُحل عبر "ربط العمليات بالحسابات": cash/bank/arControl لطرق التحصيل، revenueFallback دفاعيًا.
+// 'credit' (آجل): البيع لم يُحصَّل بعد — يدين "العملاء والذمم المدينة" بدل الصندوق/البنك مباشرة؛ يتطلب دومًا
+// partyId (يُفرَض في revenue-form-page.js). يُسوّى لاحقًا عبر سند تحصيل (createCollection في party-service.js)
+// الذي يُنشئ قيدًا منفصلاً بلا لمس هذا القيد الأصلي — نفس مبدأ عدم إعادة كتابة قيد الإصدار عند تسوية عهدة
 async function syncRevenueJournalEntry(revenueId) {
   const revenue = await dbGet('Revenues', revenueId);
   if (!revenue || Number(revenue.amount) <= 0) return null;
 
-  const [categories, accounts] = await Promise.all([getAllCategories('revenue'), getAllAccounts()]);
-  const category = categories.find(c => c.name === revenue.category);
-  const creditAccount = (category && category.linkedAccountId && accounts.find(a => a.id === category.linkedAccountId))
-    || getAccountByCode(REVENUE_FALLBACK_ACCOUNT_CODE, accounts);
+  const [accounts, mappings] = await Promise.all([getAllAccounts(), loadAccountMappings()]);
+  // البند صار حسابًا مباشرة من شجرة الحسابات (categoryAccountId) — مطابقة الاسم النصي القديم خط دفاع ثانٍ فقط
+  // لسجلات سابقة لم تُرحَّل بعد (انظر _migrateCategoryToAccountIdIfNeeded في seed.js)
+  const categoryAccount = (revenue.categoryAccountId && accounts.find(a => a.id === revenue.categoryAccountId))
+    || accounts.find(a => a.type === 'revenue' && a.name === revenue.category)
+    || null;
+  const creditAccount = categoryAccount || getMappedAccount('revenueFallback', accounts, mappings);
 
-  const debitCode = REVENUE_DEBIT_ACCOUNT_CODE_BY_METHOD[revenue.receiveMethod] || REVENUE_DEBIT_ACCOUNT_CODE_BY_METHOD.cash;
-  const debitAccount = getAccountByCode(debitCode, accounts);
+  // مدين بتراجع تدريجي: حساب العميل المخصص (partyAccount:<id>) > حساب البند لهذه الطريقة
+  // (catReceiveCash/Bank/Credit:<id> — يمكن ربط مبيعات سوق مثلاً بحساب "العملاء - السوق") > العام
+  let debitAccount = null;
+  const catCashKey = categoryAccount ? `catReceiveCash:${categoryAccount.id}` : null;
+  const catBankKey = categoryAccount ? `catReceiveBank:${categoryAccount.id}` : null;
+  const catCreditKey = categoryAccount ? `catReceiveCredit:${categoryAccount.id}` : null;
+  if (revenue.receiveMethod === 'credit') {
+    const partyKey = revenue.partyId ? `partyAccount:${revenue.partyId}` : null;
+    debitAccount = getMappedAccountWithFallback([partyKey, catCreditKey, 'revenueReceiveCredit'], accounts, mappings);
+  } else if (revenue.receiveMethod === 'cash') {
+    debitAccount = getMappedAccountWithFallback([catCashKey, 'revenueReceiveCash'], accounts, mappings);
+  } else {
+    debitAccount = getMappedAccountWithFallback([catBankKey, 'revenueReceiveBank'], accounts, mappings);
+  }
 
   if (!debitAccount || !creditAccount) return null; // دفاعي: حساب أساسي محذوف يدويًا من شجرة الحسابات
 
